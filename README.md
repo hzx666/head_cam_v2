@@ -1,59 +1,71 @@
 # data_record_upload
 
-统一 mcap 上传工具。当前只保留 `client` 顶层上传链路，`teleop` 和 `head_cam` 共用同一套代码。
+统一 mcap 数据采集与上传工具。支持 **遥操作(teleop)** 和 **头戴相机(head_cam)** 两种场景，覆盖实时数据录制、断线重连后自动修复、OSS 上传、元数据登记全链路。
 
-## 当前入口
+## 项目结构
 
-- `client/upload_mcap.py`：统一上传脚本
-- `client/mcap_parser.py`：mcap 元信息解析
-- `client/build_release.sh`：一次构建 `teleop` / `head_cam` 两个产物
-- `client/requirements.txt`：运行依赖
+```
+client/
+├── upload_mcap.py          # 统一上传脚本（teleop / head_cam 共用）
+├── mcap_parser.py           # mcap 文件元信息解析
+├── mcap_repair.py           # 损坏 mcap 自动修复（.mcap.incomplete → .mcap）
+├── build_release.sh         # PyInstaller 构建两个产物
+├── requirements.txt         # 运行依赖
+└── ego-bag/                 # 实时数据录制采集
+    ├── record_data.py       # 多相机同步采集（RealSense D405 + ZED Mini）
+    ├── config.json          # 设备配置（device_type / device_id）
+    ├── start_record.sh      # 采集启动脚本
+    └── upload_data.sh       # 采集后自动上传
 
-历史 `client/teleop/`、`client/head_cam/`、`tracker/`、`deploy/` 已移除，不再作为上传入口或进度服务。
-
-## 上传规则
-
-每个文件的处理顺序：
-
-```text
-解析 mcap meta -> 确认 OSS 已存在或上传成功 -> POST /api/raw-data/objects 写 raw_data_object
+tools/
+├── upload_status.py         # 上传进度查询与历史汇总
+├── backfill_duration.py     # 按日期回填 mcap duration
+├── oss_meta.py              # OSS 远程 mcap 元信息读取
+└── db.env.example           # DB 配置示例
 ```
 
-- OSS 对象既不存在、上传也失败时，不写数据库。
-- 选择“跳过已存在”时：OSS 已有该文件则不重传，但仍 POST 写库刷新 meta；写库前会 sleep `0.2s`，避免瞬时大量请求。
-- 选择“全部覆盖”时：重新上传 OSS，上传成功后再写库。
-- 上传线程数固定为 `1`，真实上传时显示 `ossutil cp` 原生输出，脚本同时输出 `[进度]` 汇总。
-- 0 字节 mcap 记为 `空文件`，不上传、不写库，也不计入 `失败`。
+## 实时数据录制
 
-## OSS 路径
+`ego-bag/record_data.py` 支持多相机同步采集：
 
-`teleop`：
+- **RealSense D405**：动态检测已连接的相机，每台 D405 独立进程写入 `.avi` 视频
+- **ZED Mini**：RGB 视频 + 深度视频（伪彩色） + IMU 数据（CSV）
+- 每 5 秒输出采集帧率和统计
+- 按 `config.json` 中的 `device_type` / `device_id` 自动组织存储路径
+- 停止录制后自动重命名文件（追加结束时间戳）
 
-```text
-oss://ss-oss-data-platform/original_data/teleoperation/Orin/{YYMMDD}/{dev}_device/{filename}
+## 上传流程
+
+```
+检测存储设备 → 扫描 .mcap → 自动修复不完整文件 → 选策略 → 确认 → 并发上传 → 汇总
 ```
 
-`head_cam`：
+每文件处理流水线：
 
-```text
-oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/{YYMMDD}/{dev}_device/{filename}
+```
+解析 mcap meta → 自动修复（损坏时） → 确认 OSS 已存在或上传成功 → POST 写 raw_data_object
 ```
 
-## 数据库字段
+### 自动修复（mcap_repair）
 
-客户端 POST 只允许提交接口示例中的字段：
+上传时自动检测并修复不完整的 mcap 文件：
 
-```text
-ossPath, rootPrefix, dataDomain, dataKind, captureDate, deviceNo, deviceDir,
-sessionName, relativePath, objectRole, fileFormat, fileSize, duration, etag,
-storageClass, lastModified, ossMetadata, parsedMetadata
-```
+- 扫描所有 `.mcap.incomplete` 文件，使用 `mcap recover` 命令恢复有效数据
+- 修复后的文件以 `_fixed.mcap` 后缀保存
+- 上传日志中会记录修复结果（成功/失败/耗时）
+- 构建产物内嵌 `mcap CLI`，首次运行自动下载到本地缓存
 
-如果 payload 多字段或少字段，脚本会直接失败，不会提交。
+### 上传策略
 
-`teleop` 写库时提交 `dataDomain=teleoperation`、`dataKind=orin`，服务端分区应落到 `teleoperation_orin_{YYYYMM}`，不要使用 `teleoperation_teleop_{YYYYMM}`。
+- **跳过已存在**：OSS 已有文件不重传，但仍 POST 写库刷新 meta
+- **全部覆盖**：重新上传 OSS，成功后再写库
+- 0 字节 mcap 记为"空文件"，不上传、不写库
+- OSS 上传失败不写库，零脏数据
 
-客户端只提交 `captureDate`。生产表里的 `capture_month` 是月份分桶列，值为采集日期所在月份第一天，例如 `capture_date=2026-06-16` 时 `capture_month=2026-06-01`。
+### 盘类型筛选
+
+- `teleop`：固定硬盘（RM=0），上传路径 `Orin/{YYMMDD}/{dev}_device/{filename}`
+- `head_cam`：SD 卡（RM=1），上传路径 `{YYMMDD}/{dev}_device/{filename}`
 
 ## 构建
 
@@ -61,44 +73,37 @@ storageClass, lastModified, ossMetadata, parsedMetadata
 bash client/build_release.sh
 ```
 
-构建产物：
+产物：
 
-- `dist/teleop/teleop_upload_release_<ts>`
-- `dist/head_cam/head_cam_upload_<ts>`
+- `dist/teleop/teleop_upload_release_<ts>`（默认 kind=teleop）
+- `dist/head_cam/head_cam_upload_<ts>`（默认 kind=head_cam）
+
+单文件可执行，内嵌 ossutil + mcap CLI，无需外部依赖。
 
 ## 运行
 
 ```bash
+# 直接运行产物
 dist/teleop/teleop_upload_release_<ts>
 dist/head_cam/head_cam_upload_<ts>
+
+# 源码运行需指定 kind
+UMCAP_DEFAULT_KIND=teleop python3 client/upload_mcap.py
+UMCAP_DEFAULT_KIND=head_cam python3 client/upload_mcap.py
 ```
 
-运行后会自动检测外部存储、按盘类型筛选、扫描 `.mcap` 文件、选择上传策略和本地清理策略，然后开始上传。
+## 辅助工具
 
-盘类型筛选：
-
-- `teleop`：固定硬盘，`RM=0`
-- `head_cam`：SD 卡，`RM=1`
+| 工具 | 用途 |
+|------|------|
+| `tools/upload_status.py` | 查询上传进度与历史汇总，支持 `--watch` 持续监控 |
+| `tools/backfill_duration.py` | 三阶段回填 mcap duration：query → compute → apply |
+| `tools/oss_meta.py` | OSS 远程 mcap 元信息读取（Range 请求，无需下载整文件） |
 
 ## 日志
 
-终端每行带本地时间戳，同时写入：
+终端输出带本地时间戳，同时写入：
 
-```text
-~/.cache/upload_mcap/logs/
 ```
-
-运行时缓存：
-
-```text
-~/.cache/upload_mcap/.bin/
-```
-
-## 源码运行
-
-源码运行需要指定 kind：
-
-```bash
-UMCAP_DEFAULT_KIND=teleop python3 client/upload_mcap.py
-UMCAP_DEFAULT_KIND=head_cam python3 client/upload_mcap.py
+~/.cache/upload_mcap/logs/upload_mcap_<日期>.log
 ```
