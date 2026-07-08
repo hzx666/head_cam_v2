@@ -79,6 +79,11 @@ def repair_mcap_file(source: str, dest: str, log_cb=None) -> bool:
         log(f"    mcap recover: {err[:200]}")
     else:
         log(f"    mcap recover 退出码={r.returncode}")
+    try:
+        if dest_path.exists() and dest_path.stat().st_size == 0:
+            dest_path.unlink()
+    except OSError:
+        pass
     return False
 
 

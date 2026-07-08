@@ -211,7 +211,7 @@ def object_layout_for(kind: str, dev: str, yymmdd: str, filename: str) -> dict:
             "ossPath": f"oss://{OSS_BUCKET}/original_data/teleoperation/{relative_path}",
             "rootPrefix": "original_data",
             "dataDomain": "teleoperation",
-            "dataKind": "orin",
+            "dataKind": "Orin",
             "relativePath": relative_path,
         }
     if kind == "head_cam":
