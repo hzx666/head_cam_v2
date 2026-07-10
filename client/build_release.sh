@@ -32,7 +32,7 @@ echo "  构建 upload_mcap (两产物: teleop / head_cam)"
 echo "========================================="
 
 # 构建依赖
-for dep in PyInstaller mcap cryptography; do
+for dep in PyInstaller mcap cryptography redis; do
     if ! python3 -c "import $dep" 2>/dev/null; then
         echo "[安装] $dep ..."
         python3 -m pip install "$dep" --user --break-system-packages 2>&1 | tail -2
@@ -78,6 +78,7 @@ PYEOF
         --add-data "${OSSUTIL_BIN_ABS}${SEP}ossutil" \
         --collect-all mcap \
         --hidden-import=cryptography \
+        --hidden-import=redis \
         --collect-submodules=cryptography \
         --noupx \
         --clean \
