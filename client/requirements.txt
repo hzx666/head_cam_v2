@@ -2,3 +2,4 @@ mcap
 oss2
 cryptography
 psycopg[binary]
+redis

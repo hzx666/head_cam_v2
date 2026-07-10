@@ -36,7 +36,6 @@ from urllib.error import HTTPError, URLError
 # 同级 mcap_parser.py（仓库非 Python 包）
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from mcap_parser import summarize  # noqa: E402
-from mcap_repair import scan_and_repair, repair_mcap_file  # noqa: E402
 
 # ─── 配置 ─────────────────────────────────────────────────────
 API_BASE = os.getenv("DATA_API_BASE", "http://47.116.77.177:8080")
@@ -79,6 +78,14 @@ OSS_ENDPOINT = "oss-cn-shanghai.aliyuncs.com"
 LOG_DIR = Path.home() / ".cache" / "upload_mcap" / "logs"
 LOG_DIR.mkdir(parents=True, exist_ok=True)
 LOG_FILE = LOG_DIR / f"upload_mcap_{time.strftime('%Y%m%d_%H%M%S')}.log"
+
+# Redis 配置
+REDIS_HOST = "r-uf69x5dm1c44yn6t53pd.redis.rds.aliyuncs.com"
+REDIS_PORT = 6379
+REDIS_USERNAME = "ss_data_platform_admin"
+REDIS_PASSWORD = "&n+jYD_YVHQ10NaLE-^H32(o("
+REDIS_DB = 0
+REDIS_QUEUE = "mcap:queue"
 
 _LOG_LOCK = threading.Lock()
 
@@ -189,6 +196,29 @@ def run_ossutil(args, config, capture=True, timeout=600):
         return subprocess.run(cmd, text=True, timeout=timeout, stdin=subprocess.DEVNULL)
     except subprocess.TimeoutExpired:
         return None
+
+
+def push_to_redis_queue(oss_path: str):
+    """将成功上传的 OSS 路径 LPUSH 到 Redis mcap:queue。
+
+    连接失败或 redis 库不可用仅记录日志，不影响上传流程。
+    """
+    try:
+        import redis
+    except ImportError:
+        log(f"    ⚠ redis 库未安装，跳过队列推送: {oss_path}")
+        return
+    try:
+        r = redis.Redis(
+            host=REDIS_HOST, port=REDIS_PORT,
+            username=REDIS_USERNAME, password=REDIS_PASSWORD, db=REDIS_DB,
+            socket_connect_timeout=5, socket_timeout=5,
+        )
+        r.rpush(REDIS_QUEUE, oss_path)
+        r.close()
+        log(f"    → Redis 队列已推送: {oss_path}")
+    except Exception as e:
+        log(f"    ⚠ Redis 队列推送失败（不影响上传结果）: {e}")
 
 
 # ─── 文件名解析 / OSS 路径 ────────────────────────────────────
@@ -324,30 +354,16 @@ def process_file(path: Path, kind: str, skip_existing: bool, config: str) -> dic
     except OSError:
         size = 0
     else:
-        if size < 2048:
+        if size == 0:
             return {"file": name, "ok": True, "status": "empty",
-                    "error": f"mcap解析失败: 文件过小({size}B)", "size": size}
+                    "error": "mcap解析失败: 空文件(0B)", "size": size}
 
     try:
         info = summarize(str(path))
-    except Exception:
-        # 自动修复损坏的 mcap 文件
-        tmp = str(path) + ".recovered"
-        try:
-            if repair_mcap_file(str(path), tmp, log_cb=log):
-                os.replace(tmp, str(path))
-                size = int(path.stat().st_size)
-                info = summarize(str(path))
-            else:
-                raise RuntimeError("自动修复失败")
-        except Exception as e2:
-            detail = str(e2).strip() or type(e2).__name__
-            try:
-                Path(tmp).unlink()
-            except Exception:
-                pass
-            return {"file": name, "ok": False, "status": "failed",
-                    "error": f"mcap解析失败: {detail}", "size": size}
+    except Exception as e:
+        detail = str(e).strip() or type(e).__name__
+        return {"file": name, "ok": False, "status": "failed",
+                "error": f"mcap解析失败: {detail}", "size": size}
 
     layout = object_layout_for(kind, meta["deviceNo"], meta["yymmdd"], name)
     oss_dest = layout["ossPath"]
@@ -369,6 +385,9 @@ def process_file(path: Path, kind: str, skip_existing: bool, config: str) -> dic
                 "error": "OSS上传失败", "size": size}
     if skipped_oss:
         time.sleep(0.2)
+
+    # OSS 已确认（上传成功或文件已存在），推送到 Redis 队列
+    push_to_redis_queue(oss_dest)
 
     payload = {
         "ossPath": oss_dest,
@@ -402,6 +421,7 @@ def process_file(path: Path, kind: str, skip_existing: bool, config: str) -> dic
     status = "skipped" if skipped_oss else "uploaded"
     tag = "OSS已存在/DB完成" if skipped_oss else "OSS+DB完成"
     log(f"  ✓ {name}: {tag} inserted={data.get('inserted')} updated={data.get('updated')}")
+
     return {"file": name, "ok": True, "status": status, "ossPath": oss_dest,
             "duration": info["duration_sec"], "size": size}
 
@@ -450,19 +470,12 @@ def detect_storage_devices() -> list:
                 mounts.append(drive)
     else:
         try:
-            r = subprocess.run(
-                ["lsblk", "-o", "MOUNTPOINT,RM,TRAN", "-n", "-l"],
-                capture_output=True, text=True, timeout=10)
-            for line in r.stdout.splitlines():
-                line = line.strip()
-                if not line:
-                    continue
-                parts = line.split()
-                mountpoint = parts[0] if len(parts) > 0 else ""
-                rm = parts[1] if len(parts) > 1 else ""
-                tran = parts[2] if len(parts) > 2 else ""
-                if mountpoint and mountpoint != "/" and (rm == "1" or tran == "usb"):
-                    mounts.append(mountpoint)
+            r = subprocess.run(["df", "-hl", "--output=target"],
+                               capture_output=True, text=True, timeout=10)
+            for line in r.stdout.splitlines()[1:]:
+                p = line.strip()
+                if any(x in p for x in ["/run/media/", "/media/", "/mnt/"]):
+                    mounts.append(p)
         except Exception:
             pass
     return [m for m in mounts if not any(kw in m for kw in EXCLUDE_KEYWORDS)]
@@ -569,22 +582,6 @@ def _run(kind: str, config: str):
         selected = devices if idx == 0 else [devices[idx - 1]]
     else:
         selected = devices
-
-    log("")
-    delete_incomplete = input_choice("修复 .mcap.incomplete 后是否删除原始文件?",
-                                     ["删除原始文件", "保留原始文件"]) == 0
-
-    log("")
-    log("[修复] 正在检查不完整的 mcap 文件 (.mcap.incomplete)...")
-    total_repaired = 0
-    for mp in selected:
-        device_name = os.path.basename(mp.rstrip("/\\"))
-        repaired = scan_and_repair(mp, delete_original=delete_incomplete, log_cb=log)
-        total_repaired += len(repaired)
-    if total_repaired:
-        log(f"[修复] 共修复 {total_repaired} 个文件")
-    else:
-        log("[修复] 未发现不完整的 mcap 文件")
 
     log("")
     for mp in selected:
