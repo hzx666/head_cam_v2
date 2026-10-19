@@ -1,6 +1,0 @@
-runtime/
-vendor/
-__pycache__/
-.venv/
-dist/
-.test-deps/

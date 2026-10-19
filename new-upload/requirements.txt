@@ -1,6 +1,0 @@
-oss2==2.19.1
-aliyun-mns-sdk==1.3.0
-mcap>=1.2,<2
-h5py>=3.10,<4
-numpy>=1.26,<3
-cryptography>=42
