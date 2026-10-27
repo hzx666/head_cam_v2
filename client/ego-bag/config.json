@@ -1,6 +1,0 @@
-{
-    "device_type": "Orin",
-    "device_type_options": ["Orin", "head_cam"],
-    "device_id": "020",
-    "auto_clean_after_upload": true
-}

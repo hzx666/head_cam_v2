@@ -1,0 +1,12 @@
+# Alibaba Cloud OSS upload demo configuration
+# Copy to oss_upload.conf beside data_upload_demo and run chmod 600.
+# Use a RAM AccessKey. Do not put an Alibaba Cloud web-login password here.
+
+endpoint=oss-cn-shanghai.aliyuncs.com
+bucket=replace-with-bucket-name
+access_key_id=replace-with-access-key-id
+access_key_secret=replace-with-access-key-secret
+security_token=
+object_prefix=demo
+ossutil_path=/mnt/config/oss_upload/ossutilarm64
+ca_cert_path=/usr/bin/ssl/cacert.crt
