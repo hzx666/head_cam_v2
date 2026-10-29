@@ -1,0 +1,2236 @@
+{
+  "261027": [
+    {
+      "key": "original_data/ego_human_data/head_cam/261027/0009_device/SSI_IRIS2_EGO_All_0009_20261027_094927_328_01.mcap",
+      "size": 9899779
+    }
+  ],
+  "261024": [
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_024107_212_01.mcap",
+      "size": 61808755
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_024150_212_01.mcap",
+      "size": 223465270
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_024656_541_01.mcap",
+      "size": 409878241
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_032359_285_01.mcap",
+      "size": 255445823
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_032849_435_01.mcap",
+      "size": 266240492
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_033515_425_01.mcap",
+      "size": 285950761
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_034435_725_01.mcap",
+      "size": 330414484
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_034838_785_01.mcap",
+      "size": 301875917
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_035124_135_01.mcap",
+      "size": 370350046
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_035542_575_01.mcap",
+      "size": 480117093
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_054444_887_01.mcap",
+      "size": 152021775
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_061718_597_01.mcap",
+      "size": 193210629
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_061909_456_01.mcap",
+      "size": 207428194
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_062017_505_01.mcap",
+      "size": 296797857
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_064314_542_01.mcap",
+      "size": 260876100
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_064608_586_01.mcap",
+      "size": 377379906
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_064935_240_01.mcap",
+      "size": 393876617
+    }
+  ],
+  "261023": [
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_092338_391_01.mcap",
+      "size": 115250230
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_092446_696_01.mcap",
+      "size": 128268966
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_092604_596_01.mcap",
+      "size": 237134084
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_092805_687_01.mcap",
+      "size": 191986414
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_092933_545_01.mcap",
+      "size": 128079971
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_093027_148_01.mcap",
+      "size": 128254914
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_093153_296_01.mcap",
+      "size": 131749864
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_093257_596_01.mcap",
+      "size": 241660398
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_093510_536_01.mcap",
+      "size": 412487283
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_093749_796_01.mcap",
+      "size": 436159170
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094023_036_01.mcap",
+      "size": 221889866
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094142_196_01.mcap",
+      "size": 245441084
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094331_996_01.mcap",
+      "size": 312141927
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094517_836_01.mcap",
+      "size": 248285378
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094708_096_01.mcap",
+      "size": 121677188
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094801_446_01.mcap",
+      "size": 112019226
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094854_436_01.mcap",
+      "size": 167976764
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094959_346_01.mcap",
+      "size": 159034468
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_095108_097_01.mcap",
+      "size": 189629313
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_095217_686_01.mcap",
+      "size": 201926392
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_095320_235_01.mcap",
+      "size": 21328016
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_100648_878_01.mcap",
+      "size": 246466325
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_100832_814_01.mcap",
+      "size": 150892614
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_100929_719_01.mcap",
+      "size": 140458990
+    }
+  ],
+  "260923": [
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_141729_391.mcap",
+      "size": 774977122
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_141805_228.mcap",
+      "size": 586642312
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_142108_294.mcap",
+      "size": 538283089
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_142130_744.mcap",
+      "size": 757726474
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_142535_807.mcap",
+      "size": 560785696
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_142543_796_fixed.mcap",
+      "size": 309448155
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_143251_741.mcap",
+      "size": 240817476
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_143415_735.mcap",
+      "size": 221024509
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_143532_206.mcap",
+      "size": 314416739
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_143714_868.mcap",
+      "size": 207194044
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_143845_348.mcap",
+      "size": 935650566
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_144420_075.mcap",
+      "size": 59502855
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_144449_391.mcap",
+      "size": 54128987
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_144515_914.mcap",
+      "size": 50902463
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_144540_929.mcap",
+      "size": 50001128
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_144605_450.mcap",
+      "size": 47491836
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_144630_205.mcap",
+      "size": 51084078
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_144713_527.mcap",
+      "size": 50244877
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_144738_341.mcap",
+      "size": 45829305
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145015_843.mcap",
+      "size": 48700598
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145039_703.mcap",
+      "size": 47024588
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145103_752.mcap",
+      "size": 48065666
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145200_371.mcap",
+      "size": 43031137
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145222_747.mcap",
+      "size": 45213688
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145248_811.mcap",
+      "size": 48352510
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145311_710.mcap",
+      "size": 48449630
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145335_676.mcap",
+      "size": 41749716
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145356_734.mcap",
+      "size": 45264785
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145421_173.mcap",
+      "size": 45835646
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145504_944.mcap",
+      "size": 51533115
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145530_646.mcap",
+      "size": 44088528
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145552_751.mcap",
+      "size": 45873697
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145726_656.mcap",
+      "size": 39142411
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145748_576.mcap",
+      "size": 39510150
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145810_504.mcap",
+      "size": 40449379
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145835_251.mcap",
+      "size": 42260343
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145857_207.mcap",
+      "size": 43423455
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145918_909.mcap",
+      "size": 45518611
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_145943_654.mcap",
+      "size": 43424314
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150006_568.mcap",
+      "size": 42264965
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150043_992.mcap",
+      "size": 43044125
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150106_186.mcap",
+      "size": 44199581
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150129_571.mcap",
+      "size": 40159169
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150152_915.mcap",
+      "size": 43048914
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150215_873.mcap",
+      "size": 40522239
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150237_502.mcap",
+      "size": 42286201
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150301_041.mcap",
+      "size": 43031678
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150324_356.mcap",
+      "size": 48308721
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150349_465.mcap",
+      "size": 41758333
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150417_478.mcap",
+      "size": 49079046
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150447_255.mcap",
+      "size": 44949961
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150653_850.mcap",
+      "size": 48186843
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150719_682.mcap",
+      "size": 47478344
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150744_054.mcap",
+      "size": 47259816
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150808_097.mcap",
+      "size": 45965361
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150831_379.mcap",
+      "size": 50182887
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150859_556.mcap",
+      "size": 49191738
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150922_843.mcap",
+      "size": 44922704
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_150947_837.mcap",
+      "size": 47377078
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151011_564.mcap",
+      "size": 43866675
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151035_480.mcap",
+      "size": 43207397
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151100_494.mcap",
+      "size": 42299506
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151124_960.mcap",
+      "size": 44186964
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151148_794.mcap",
+      "size": 43575248
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151213_133.mcap",
+      "size": 44346863
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151237_628.mcap",
+      "size": 44237996
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151301_092.mcap",
+      "size": 41538808
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151324_617.mcap",
+      "size": 44800930
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151348_693.mcap",
+      "size": 42508062
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151411_598.mcap",
+      "size": 44139834
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151436_070.mcap",
+      "size": 47600504
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151501_367.mcap",
+      "size": 41123469
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151524_520.mcap",
+      "size": 38482759
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151548_647.mcap",
+      "size": 44950848
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151614_407.mcap",
+      "size": 35383789
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151637_554.mcap",
+      "size": 38059051
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151659_610.mcap",
+      "size": 37595710
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151721_590.mcap",
+      "size": 38155870
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151743_998.mcap",
+      "size": 44164702
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151809_268.mcap",
+      "size": 38540958
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151832_229.mcap",
+      "size": 40023563
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151855_663.mcap",
+      "size": 37839032
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151917_313.mcap",
+      "size": 41178198
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151940_706.mcap",
+      "size": 42169130
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_152019_801.mcap",
+      "size": 40017699
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_152042_606.mcap",
+      "size": 42012581
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_152114_312.mcap",
+      "size": 42383088
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_152140_442.mcap",
+      "size": 37295099
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_152611_795.mcap",
+      "size": 113792945
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_152715_998.mcap",
+      "size": 80365350
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_152820_447.mcap",
+      "size": 89512897
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_152925_293.mcap",
+      "size": 87177139
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153015_566.mcap",
+      "size": 71768110
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153058_295.mcap",
+      "size": 80597728
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153141_938.mcap",
+      "size": 82100279
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153233_866.mcap",
+      "size": 81340350
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153317_605.mcap",
+      "size": 79964815
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153403_997.mcap",
+      "size": 79739011
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153454_609.mcap",
+      "size": 79008955
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153549_186.mcap",
+      "size": 87749361
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153631_418.mcap",
+      "size": 73936828
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153712_152.mcap",
+      "size": 83397818
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153812_736.mcap",
+      "size": 64695594
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_153854_272.mcap",
+      "size": 78022294
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_154000_812.mcap",
+      "size": 76602074
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_154138_426.mcap",
+      "size": 83253119
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_154220_761.mcap",
+      "size": 77527258
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_154328_487.mcap",
+      "size": 84029806
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_154424_281.mcap",
+      "size": 77468762
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_154707_915.mcap",
+      "size": 83391452
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_154823_919.mcap",
+      "size": 60707264
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161003_576.mcap",
+      "size": 46318651
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161035_440.mcap",
+      "size": 49448797
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161139_887.mcap",
+      "size": 52044464
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161216_714.mcap",
+      "size": 50235935
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161245_460.mcap",
+      "size": 54318039
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161322_742.mcap",
+      "size": 45264788
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161506_843.mcap",
+      "size": 53672439
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161548_719.mcap",
+      "size": 60834740
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161626_162.mcap",
+      "size": 51722107
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161740_103.mcap",
+      "size": 52966741
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161812_188.mcap",
+      "size": 56202013
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_161935_068.mcap",
+      "size": 57005822
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162011_976.mcap",
+      "size": 52392759
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162048_348.mcap",
+      "size": 55347170
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162127_593.mcap",
+      "size": 50853666
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162204_327.mcap",
+      "size": 50380681
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162242_986.mcap",
+      "size": 56654915
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162322_945.mcap",
+      "size": 51059072
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162358_383.mcap",
+      "size": 47620294
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162432_137.mcap",
+      "size": 48446738
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162511_511.mcap",
+      "size": 57938782
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162546_309.mcap",
+      "size": 50437953
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162621_919.mcap",
+      "size": 55373637
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162659_300.mcap",
+      "size": 48686053
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162728_725.mcap",
+      "size": 52751937
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_162928_011.mcap",
+      "size": 40926818
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_163517_974.mcap",
+      "size": 51652219
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_163556_241.mcap",
+      "size": 77224397
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_163635_277.mcap",
+      "size": 52755784
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_163712_807.mcap",
+      "size": 47865127
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_163749_254.mcap",
+      "size": 62323148
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_163829_753.mcap",
+      "size": 71234091
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_163907_947.mcap",
+      "size": 49346446
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_163947_606.mcap",
+      "size": 47617767
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_164031_191.mcap",
+      "size": 48661996
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_164114_771.mcap",
+      "size": 51322363
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_164159_012.mcap",
+      "size": 48810671
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_164233_947.mcap",
+      "size": 53257106
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_164440_352.mcap",
+      "size": 46054901
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_164520_227.mcap",
+      "size": 50407726
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_164601_420.mcap",
+      "size": 37349484
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_164650_170.mcap",
+      "size": 56632932
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_125403_972.mcap",
+      "size": 664176580
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_125738_918.mcap",
+      "size": 646264298
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_130115_116.mcap",
+      "size": 692879390
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_130449_386.mcap",
+      "size": 698615198
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_130842_352.mcap",
+      "size": 724579142
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_131358_859.mcap",
+      "size": 765731381
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_131754_302.mcap",
+      "size": 700109949
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_132227_955.mcap",
+      "size": 639687039
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_132603_573.mcap",
+      "size": 622420029
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_132926_195.mcap",
+      "size": 644850872
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_133250_893.mcap",
+      "size": 583500420
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_134735_105.mcap",
+      "size": 557919853
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_135042_988.mcap",
+      "size": 610137809
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_135425_232.mcap",
+      "size": 622615754
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_135747_102.mcap",
+      "size": 635270066
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_140127_572.mcap",
+      "size": 587133382
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_140450_648.mcap",
+      "size": 650046262
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_140817_634.mcap",
+      "size": 644666412
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_141145_471.mcap",
+      "size": 578915927
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_141451_871.mcap",
+      "size": 603140242
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_141655_976.mcap",
+      "size": 1582310722
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_141801_014.mcap",
+      "size": 574875794
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_142104_921.mcap",
+      "size": 601745872
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_142404_396.mcap",
+      "size": 1391422726
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_143146_390.mcap",
+      "size": 1285699289
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_143745_647.mcap",
+      "size": 522012846
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_144031_573.mcap",
+      "size": 529499031
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_144319_494.mcap",
+      "size": 569499464
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_145523_241.mcap",
+      "size": 1324172868
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_150129_565.mcap",
+      "size": 877328929
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_150635_802.mcap",
+      "size": 1242466267
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_151347_503.mcap",
+      "size": 1356502088
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_152913_012.mcap",
+      "size": 1117272682
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_153427_144.mcap",
+      "size": 1066441134
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_154306_920.mcap",
+      "size": 736163935
+    }
+  ],
+  "260922": [
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_141749_584.mcap",
+      "size": 165287302
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_141856_671.mcap",
+      "size": 166475214
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_141858_048.mcap",
+      "size": 204305668
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142008_475.mcap",
+      "size": 154863978
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142016_396.mcap",
+      "size": 172146340
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142122_995.mcap",
+      "size": 146959015
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142126_121.mcap",
+      "size": 197884736
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142147_251.mcap",
+      "size": 231228136
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142227_536.mcap",
+      "size": 159664900
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142304_502.mcap",
+      "size": 207781103
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142320_205.mcap",
+      "size": 225845894
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142335_080.mcap",
+      "size": 164719130
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142429_510.mcap",
+      "size": 206686510
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142444_934.mcap",
+      "size": 151097424
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142503_236.mcap",
+      "size": 208446672
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142553_416.mcap",
+      "size": 158298972
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142558_606.mcap",
+      "size": 201839220
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142638_866.mcap",
+      "size": 207204997
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142703_527.mcap",
+      "size": 156001734
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142722_310.mcap",
+      "size": 199522651
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142830_862.mcap",
+      "size": 221211448
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142843_213.mcap",
+      "size": 202949127
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_142857_131.mcap",
+      "size": 170099180
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143008_093.mcap",
+      "size": 221901283
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143010_787.mcap",
+      "size": 165727393
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143012_233.mcap",
+      "size": 191482007
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143116_337.mcap",
+      "size": 168059284
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143136_360.mcap",
+      "size": 198207082
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143201_504.mcap",
+      "size": 202451869
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143227_435.mcap",
+      "size": 159546800
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143305_103.mcap",
+      "size": 208998956
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143417_296.mcap",
+      "size": 163101674
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143430_958.mcap",
+      "size": 189848994
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143556_090.mcap",
+      "size": 186357356
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143615_769.mcap",
+      "size": 162733982
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143625_204.mcap",
+      "size": 185357604
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143720_600.mcap",
+      "size": 216691450
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143727_441.mcap",
+      "size": 182152923
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143802_701.mcap",
+      "size": 212538128
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143850_928.mcap",
+      "size": 214495385
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143851_121.mcap",
+      "size": 167131456
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_143927_372.mcap",
+      "size": 202142450
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144005_098.mcap",
+      "size": 154508009
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144029_965.mcap",
+      "size": 196231233
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144106_879.mcap",
+      "size": 182434848
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144113_963.mcap",
+      "size": 154659747
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144152_899.mcap",
+      "size": 198868605
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144221_545.mcap",
+      "size": 154532881
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144230_060.mcap",
+      "size": 210187225
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144406_636.mcap",
+      "size": 209126711
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144407_817.mcap",
+      "size": 157953940
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144522_538.mcap",
+      "size": 234978665
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144525_051.mcap",
+      "size": 164324783
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144541_848.mcap",
+      "size": 197880894
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144634_554.mcap",
+      "size": 161417582
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144721_223.mcap",
+      "size": 200782358
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144729_148.mcap",
+      "size": 203859829
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144744_959.mcap",
+      "size": 157985367
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144851_470.mcap",
+      "size": 199040470
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144908_861.mcap",
+      "size": 198786809
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_144941_153.mcap",
+      "size": 168791405
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145023_227.mcap",
+      "size": 190108572
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145035_764.mcap",
+      "size": 205462580
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145051_031.mcap",
+      "size": 158016203
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145144_041.mcap",
+      "size": 186731237
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145156_695.mcap",
+      "size": 150599602
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145202_392.mcap",
+      "size": 195643528
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145310_079.mcap",
+      "size": 156727070
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145344_012.mcap",
+      "size": 192730430
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145449_688.mcap",
+      "size": 152615436
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145524_384.mcap",
+      "size": 188925136
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145640_965.mcap",
+      "size": 164383156
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145648_345.mcap",
+      "size": 172360221
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145653_040.mcap",
+      "size": 190471224
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145748_117.mcap",
+      "size": 152835893
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145806_003.mcap",
+      "size": 176253037
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145849_121.mcap",
+      "size": 175967663
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145901_581.mcap",
+      "size": 147538885
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_145922_963.mcap",
+      "size": 148942201
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150008_582.mcap",
+      "size": 154426869
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150024_589.mcap",
+      "size": 189697585
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150029_320.mcap",
+      "size": 165977126
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150144_308.mcap",
+      "size": 153247294
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150149_086.mcap",
+      "size": 156827151
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150150_629.mcap",
+      "size": 174931575
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150305_987.mcap",
+      "size": 147459801
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150308_201.mcap",
+      "size": 187424613
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150413_238.mcap",
+      "size": 126891661
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150436_009.mcap",
+      "size": 174524065
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150515_031.mcap",
+      "size": 124435951
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150604_542.mcap",
+      "size": 171933657
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150625_168.mcap",
+      "size": 116103168
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150726_186.mcap",
+      "size": 118950419
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150752_974.mcap",
+      "size": 186060834
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150819_425.mcap",
+      "size": 113227160
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150915_343.mcap",
+      "size": 103093329
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_150921_210.mcap",
+      "size": 182633094
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151012_554.mcap",
+      "size": 112123445
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151042_778.mcap",
+      "size": 204461224
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151112_865.mcap",
+      "size": 117023275
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151208_518.mcap",
+      "size": 113188722
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151208_533.mcap",
+      "size": 195767505
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151301_666.mcap",
+      "size": 105050275
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151323_938.mcap",
+      "size": 182552786
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151351_333.mcap",
+      "size": 106578952
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151437_827.mcap",
+      "size": 193760286
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151556_488.mcap",
+      "size": 191214873
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/000L_device/SSIEGO_Cam_000L_20260922_151715_564.mcap",
+      "size": 156390781
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_141733_581.mcap",
+      "size": 121035282
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_141851_039.mcap",
+      "size": 73842169
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142013_845.mcap",
+      "size": 99530748
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142055_463.mcap",
+      "size": 97827304
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142117_583.mcap",
+      "size": 95529715
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142154_605.mcap",
+      "size": 101286354
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142253_182.mcap",
+      "size": 111206972
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142433_269.mcap",
+      "size": 141438160
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142552_556.mcap",
+      "size": 124990535
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142701_469.mcap",
+      "size": 118177754
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142713_883.mcap",
+      "size": 114833753
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142815_411.mcap",
+      "size": 85302646
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142822_276.mcap",
+      "size": 131203807
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142907_264.mcap",
+      "size": 75488353
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142934_281.mcap",
+      "size": 122913782
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_142956_740.mcap",
+      "size": 97910628
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143036_673.mcap",
+      "size": 96794094
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143043_621.mcap",
+      "size": 90150063
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143135_210.mcap",
+      "size": 97724760
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143214_790.mcap",
+      "size": 97010728
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143229_062.mcap",
+      "size": 92463326
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143301_819.mcap",
+      "size": 76295886
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143349_841.mcap",
+      "size": 96733261
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143351_158.mcap",
+      "size": 84252329
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143438_487.mcap",
+      "size": 74314789
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143449_133.mcap",
+      "size": 96098286
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143532_381.mcap",
+      "size": 82276686
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143545_053.mcap",
+      "size": 84770562
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143626_006.mcap",
+      "size": 74918918
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143638_002.mcap",
+      "size": 85242839
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143709_097.mcap",
+      "size": 71533889
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143755_481.mcap",
+      "size": 73528469
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_143920_471.mcap",
+      "size": 81601362
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144007_468.mcap",
+      "size": 62257552
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144058_018.mcap",
+      "size": 76504064
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144144_064.mcap",
+      "size": 71020854
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144145_753.mcap",
+      "size": 82082117
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144222_995.mcap",
+      "size": 70546852
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144302_876.mcap",
+      "size": 63805601
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144347_204.mcap",
+      "size": 70846996
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144430_247.mcap",
+      "size": 109004013
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144431_592.mcap",
+      "size": 99213905
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144519_530.mcap",
+      "size": 64075569
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144527_219.mcap",
+      "size": 112345414
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144627_507.mcap",
+      "size": 102167565
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144724_559.mcap",
+      "size": 103281262
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144823_581.mcap",
+      "size": 103943346
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144837_188.mcap",
+      "size": 78567860
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144917_114.mcap",
+      "size": 82545872
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144927_434.mcap",
+      "size": 98869971
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_144958_913.mcap",
+      "size": 71422316
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145028_313.mcap",
+      "size": 102018248
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145039_575.mcap",
+      "size": 66719154
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145117_792.mcap",
+      "size": 63392119
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145134_491.mcap",
+      "size": 100859575
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145152_688.mcap",
+      "size": 56622376
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145237_885.mcap",
+      "size": 110092595
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145314_514.mcap",
+      "size": 67227160
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145340_355.mcap",
+      "size": 103924271
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145411_633.mcap",
+      "size": 64811678
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145442_633.mcap",
+      "size": 101173306
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145456_888.mcap",
+      "size": 66253060
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145542_139.mcap",
+      "size": 63515609
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145552_886.mcap",
+      "size": 100210966
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145652_307.mcap",
+      "size": 100890969
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145722_643.mcap",
+      "size": 67299055
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145745_015.mcap",
+      "size": 101594247
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145841_888.mcap",
+      "size": 93496593
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_145939_186.mcap",
+      "size": 98288350
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150233_247.mcap",
+      "size": 59177618
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150311_772.mcap",
+      "size": 198705680
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150315_835.mcap",
+      "size": 63673222
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150353_569.mcap",
+      "size": 73022462
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150438_463.mcap",
+      "size": 60956876
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150453_826.mcap",
+      "size": 73841710
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150544_512.mcap",
+      "size": 69776520
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150544_807.mcap",
+      "size": 59566376
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150628_440.mcap",
+      "size": 68619683
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150632_910.mcap",
+      "size": 69722191
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150713_200.mcap",
+      "size": 61701663
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150732_576.mcap",
+      "size": 65911569
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150816_633.mcap",
+      "size": 65062673
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150853_348.mcap",
+      "size": 54190409
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150905_221.mcap",
+      "size": 52890095
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_150937_805.mcap",
+      "size": 62768830
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151015_339.mcap",
+      "size": 63732646
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151019_757.mcap",
+      "size": 58328721
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151052_776.mcap",
+      "size": 71749703
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151133_765.mcap",
+      "size": 57200443
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151211_059.mcap",
+      "size": 71896990
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151233_952.mcap",
+      "size": 53100486
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151249_398.mcap",
+      "size": 64027730
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151307_347.mcap",
+      "size": 48007785
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151334_754.mcap",
+      "size": 62692421
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151359_813.mcap",
+      "size": 61552208
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151417_916.mcap",
+      "size": 69585819
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151446_790.mcap",
+      "size": 78972678
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151456_664.mcap",
+      "size": 63759387
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151542_997.mcap",
+      "size": 59065632
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151551_771.mcap",
+      "size": 88708437
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151620_137.mcap",
+      "size": 55733521
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151633_157.mcap",
+      "size": 68774969
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151654_584.mcap",
+      "size": 63688786
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151723_772.mcap",
+      "size": 79277013
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151731_989.mcap",
+      "size": 63335462
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151802_418.mcap",
+      "size": 71014276
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151810_491.mcap",
+      "size": 60031736
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151840_475.mcap",
+      "size": 65138135
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151847_904.mcap",
+      "size": 58533212
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151850_905.mcap",
+      "size": 55924401
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151924_213.mcap",
+      "size": 76180476
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151925_700.mcap",
+      "size": 67268161
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_151925_899.mcap",
+      "size": 63866423
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152011_130.mcap",
+      "size": 66445884
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152038_814.mcap",
+      "size": 89555508
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152102_590.mcap",
+      "size": 69461144
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152137_177.mcap",
+      "size": 69470445
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152148_128.mcap",
+      "size": 73994877
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152224_735.mcap",
+      "size": 94544131
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152237_508.mcap",
+      "size": 63430971
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152310_865.mcap",
+      "size": 100126591
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152327_808.mcap",
+      "size": 63899843
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152402_712.mcap",
+      "size": 94292243
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152417_335.mcap",
+      "size": 61992210
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152503_304.mcap",
+      "size": 88165028
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152509_988.mcap",
+      "size": 78931002
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152600_069.mcap",
+      "size": 78150704
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152647_731.mcap",
+      "size": 63498397
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152707_317.mcap",
+      "size": 74445349
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152732_105.mcap",
+      "size": 66992813
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152751_180.mcap",
+      "size": 55169221
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152818_043.mcap",
+      "size": 62683893
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152835_227.mcap",
+      "size": 57098474
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152912_539.mcap",
+      "size": 63494256
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_152954_483.mcap",
+      "size": 61576690
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153013_009.mcap",
+      "size": 72644085
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153058_428.mcap",
+      "size": 88006118
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153111_074.mcap",
+      "size": 77187707
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153146_632.mcap",
+      "size": 71320687
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153154_557.mcap",
+      "size": 75819860
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153231_744.mcap",
+      "size": 69779841
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153234_556.mcap",
+      "size": 75589613
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153314_719.mcap",
+      "size": 75543069
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153323_802.mcap",
+      "size": 84561755
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153359_899.mcap",
+      "size": 68088587
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153416_195.mcap",
+      "size": 68398073
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153444_850.mcap",
+      "size": 63689973
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153503_234.mcap",
+      "size": 64143212
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153522_845.mcap",
+      "size": 71236264
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153603_887.mcap",
+      "size": 64873337
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153615_131.mcap",
+      "size": 73065107
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153647_537.mcap",
+      "size": 63354695
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153653_664.mcap",
+      "size": 69807642
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153727_932.mcap",
+      "size": 62955811
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153737_978.mcap",
+      "size": 71108866
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153804_555.mcap",
+      "size": 57885003
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153825_096.mcap",
+      "size": 69418959
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153841_530.mcap",
+      "size": 63479758
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153946_947.mcap",
+      "size": 65569266
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_153949_146.mcap",
+      "size": 66073441
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_154029_061.mcap",
+      "size": 62069707
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_154030_556.mcap",
+      "size": 76719760
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_154107_351.mcap",
+      "size": 62999460
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_154124_886.mcap",
+      "size": 66210013
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_154142_900.mcap",
+      "size": 57802879
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_154210_367.mcap",
+      "size": 68931194
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_154253_239.mcap",
+      "size": 58523356
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_154834_685.mcap",
+      "size": 53505297
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_154910_023.mcap",
+      "size": 56805571
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_154946_071.mcap",
+      "size": 63927877
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155030_714.mcap",
+      "size": 47847458
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155104_973.mcap",
+      "size": 56185464
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155147_429.mcap",
+      "size": 46004003
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155220_603.mcap",
+      "size": 54092638
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155255_754.mcap",
+      "size": 53536496
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155328_474.mcap",
+      "size": 46597744
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155401_025.mcap",
+      "size": 50801330
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155432_865.mcap",
+      "size": 52541295
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155512_985.mcap",
+      "size": 45796902
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155543_485.mcap",
+      "size": 51766702
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155615_929.mcap",
+      "size": 49931733
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155646_368.mcap",
+      "size": 53574323
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155716_854.mcap",
+      "size": 54854146
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155753_137.mcap",
+      "size": 53630770
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155823_742.mcap",
+      "size": 50664887
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_141840_239.mcap",
+      "size": 238614989
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_142016_928.mcap",
+      "size": 198108344
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_142200_063.mcap",
+      "size": 201604883
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_142333_827.mcap",
+      "size": 195099976
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_142455_423.mcap",
+      "size": 202807873
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_142623_011.mcap",
+      "size": 213566489
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_142748_890.mcap",
+      "size": 197332504
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_142911_393.mcap",
+      "size": 201921461
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_143035_061.mcap",
+      "size": 222060577
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_143229_165.mcap",
+      "size": 216909080
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_143402_280.mcap",
+      "size": 199442422
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_143529_132.mcap",
+      "size": 206311792
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_143656_725.mcap",
+      "size": 195124009
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_143820_428.mcap",
+      "size": 210835991
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_143940_932.mcap",
+      "size": 180855522
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_144059_374.mcap",
+      "size": 181516006
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_144225_174.mcap",
+      "size": 192073411
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_144405_081.mcap",
+      "size": 196912780
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_144550_298.mcap",
+      "size": 180647309
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_145636_603.mcap",
+      "size": 182002891
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_145750_449.mcap",
+      "size": 186727994
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_145915_960.mcap",
+      "size": 179211049
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_150026_004.mcap",
+      "size": 195579962
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_150147_846.mcap",
+      "size": 202778017
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_150319_759.mcap",
+      "size": 187764457
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_150433_696.mcap",
+      "size": 192594116
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_150551_671.mcap",
+      "size": 180816525
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_150855_966.mcap",
+      "size": 191488847
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_151024_466.mcap",
+      "size": 192878990
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_151143_624.mcap",
+      "size": 194904977
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_151323_170.mcap",
+      "size": 202752719
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_151653_492.mcap",
+      "size": 161606199
+    },
+    {
+      "key": "original_data/ego_human_data/head_cam/260922/002D_device/SSIEGO_Cam_002D_20260922_154059_030.mcap",
+      "size": 2482786692
+    }
+  ]
+}

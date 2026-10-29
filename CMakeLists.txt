@@ -1,57 +1,48 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(data_upload_scan VERSION 0.2.0 LANGUAGES C)
+project(head_cam_upload VERSION 1.0.0 LANGUAGES C ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS ON)
 
-add_executable(data_upload_scan
-    src/main.c
-    src/tf_scan.c
-)
-
-target_include_directories(data_upload_scan PRIVATE include)
-
-target_compile_definitions(data_upload_scan PRIVATE
-    _FILE_OFFSET_BITS=64
-    PROGRAM_VERSION="${PROJECT_VERSION}"
-)
-
-target_compile_options(data_upload_scan PRIVATE
-    -Wall
-    -Wextra
-    -Wpedantic
-    -Wconversion
-    -Wshadow
-    -Wformat=2
-    -Werror=return-type
-)
-
-install(TARGETS data_upload_scan RUNTIME DESTINATION bin)
-
-add_executable(data_upload_demo
-    src/upload_main.c
-    src/tf_scan.c
-    src/oss_config.c
-    src/oss_upload.c
-)
-
-target_include_directories(data_upload_demo PRIVATE include)
-
-target_compile_definitions(data_upload_demo PRIVATE
-    _FILE_OFFSET_BITS=64
-    PROGRAM_VERSION="${PROJECT_VERSION}"
-)
-
-target_compile_options(data_upload_demo PRIVATE
-    -Wall
-    -Wextra
-    -Wpedantic
-    -Wconversion
-    -Wshadow
-    -Wformat=2
-    -Werror=return-type
-)
-
-install(TARGETS data_upload_demo RUNTIME DESTINATION bin)
+option(SERVICE_TESTING "Enable offline test-only dependency overrides" OFF)
+option(SERVICE_STATIC "Statically link the service and dependencies" OFF)
+set(BUNDLE_DIR "" CACHE PATH "Private output directory from embed_bundle.py")
+set(SERVICE_DEPS "" CACHE PATH "Extracted target development libraries")
+find_package(Threads REQUIRED)
+add_executable(head-cam-upload
+    src/service_main.c src/service_util.c src/service_bundle.c
+    src/service_upload.c src/service_tasks.c src/service_http.c
+    src/head_mcap.c src/tf_scan.c third_party/cjson/cJSON.c)
+target_include_directories(head-cam-upload PRIVATE include third_party)
+target_compile_definitions(head-cam-upload PRIVATE _GNU_SOURCE _FILE_OFFSET_BITS=64 CJSON_NESTING_LIMIT=64)
+target_compile_options(head-cam-upload PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Werror=return-type)
+if(SERVICE_TESTING)
+    target_compile_definitions(head-cam-upload PRIVATE SERVICE_TESTING)
+endif()
+if(BUNDLE_DIR)
+    target_sources(head-cam-upload PRIVATE "${BUNDLE_DIR}/bundle_data.S")
+    target_include_directories(head-cam-upload PRIVATE "${BUNDLE_DIR}")
+    target_compile_definitions(head-cam-upload PRIVATE SERVICE_EMBEDDED)
+elseif(NOT SERVICE_TESTING)
+    message(FATAL_ERROR "Release needs BUNDLE_DIR; use build_release.sh. Offline development: -DSERVICE_TESTING=ON")
+endif()
+if(SERVICE_DEPS)
+    target_include_directories(head-cam-upload BEFORE PRIVATE "${SERVICE_DEPS}/usr/include" "${SERVICE_DEPS}/usr/include/aarch64-linux-gnu")
+    set(DEP_LIB "${SERVICE_DEPS}/usr/lib/aarch64-linux-gnu")
+    target_link_libraries(head-cam-upload PRIVATE "${DEP_LIB}/libcrypto.a" "${DEP_LIB}/libzstd.a" "${DEP_LIB}/liblz4.a")
+else()
+    if(SERVICE_STATIC)
+        set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
+    endif()
+    find_library(CRYPTO_LIB crypto REQUIRED)
+    find_library(ZSTD_LIB zstd REQUIRED)
+    find_library(LZ4_LIB lz4 REQUIRED)
+    target_link_libraries(head-cam-upload PRIVATE ${CRYPTO_LIB} ${ZSTD_LIB} ${LZ4_LIB})
+endif()
+target_link_libraries(head-cam-upload PRIVATE Threads::Threads m dl)
+if(SERVICE_STATIC)
+    target_link_options(head-cam-upload PRIVATE -static)
+endif()
+install(TARGETS head-cam-upload RUNTIME DESTINATION bin)

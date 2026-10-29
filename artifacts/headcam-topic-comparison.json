@@ -1,0 +1,1073 @@
+[
+  {
+    "key": "original_data/ego_human_data/head_cam/261027/0009_device/SSI_IRIS2_EGO_All_0009_20261027_094927_328_01.mcap",
+    "size": 9899779,
+    "metadata": {
+      "x-oss-meta-capturedate": "2026-10-27",
+      "x-oss-meta-check-preview": "false",
+      "x-oss-meta-datadomain": "ego_human_data",
+      "x-oss-meta-datakind": "head_cam",
+      "x-oss-meta-devicedir": "0009_device",
+      "x-oss-meta-deviceno": "0009",
+      "x-oss-meta-duration": "2.500",
+      "x-oss-meta-error-message": "NO_FR_TOPIC",
+      "x-oss-meta-etag": "7ACC690CEEA2C8072168E2EA26DE6C64",
+      "x-oss-meta-fileformat": "mcap",
+      "x-oss-meta-filesize": "9899779",
+      "x-oss-meta-lastmodified": "2026-10-28T05:28:21.000Z",
+      "x-oss-meta-objectrole": "data",
+      "x-oss-meta-ossmetadata": "{}",
+      "x-oss-meta-osspath": "oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/261027/0009_device/SSI_IRIS2_EGO_All_0009_20261027_094927_328_01.mcap",
+      "x-oss-meta-relativepath": "261027/0009_device/SSI_IRIS2_EGO_All_0009_20261027_094927_328_01.mcap",
+      "x-oss-meta-rootprefix": "original_data",
+      "x-oss-meta-sessionname": "261027",
+      "x-oss-meta-sha256": "2e57958565a46ab772dc23bfb4734cc387a20b6b7c7604d90ef275a38c7f38eb",
+      "x-oss-meta-storageclass": "Standard"
+    },
+    "summary": {
+      "file": "SSI_IRIS2_EGO_All_0009_20261027_094927_328_01.mcap",
+      "duration": "2.500s",
+      "duration_sec": 2.5,
+      "message_count": 262,
+      "channel_count": 7,
+      "schema_count": 3,
+      "chunk_count": 3,
+      "size_mb": 9.9,
+      "start": "2026-10-27T17:49:27.425550",
+      "end": "2026-10-27T17:49:29.925197",
+      "channels": [
+        {
+          "topic": "/robot0/sensor_msgs/front_center/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 41,
+          "hz": 16.4
+        },
+        {
+          "topic": "/robot0/sensor_msgs/front_left/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 0,
+          "hz": 0.0
+        },
+        {
+          "topic": "/robot0/sensor_msgs/front_right/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 72,
+          "hz": 28.8
+        },
+        {
+          "topic": "/robot0/sensor_msgs/rear_left/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 75,
+          "hz": 30.0
+        },
+        {
+          "topic": "/robot0/sensor_msgs/rear_right/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 74,
+          "hz": 29.6
+        },
+        {
+          "topic": "/robot0/sensor_msgs/imu",
+          "type": "sensor_msgs/Imu",
+          "encoding": "ros1",
+          "msgs": 0,
+          "hz": 0.0
+        },
+        {
+          "topic": "/robot0/audio_common_msgs/audio",
+          "type": "foxglove.RawAudio",
+          "encoding": "protobuf",
+          "msgs": 0,
+          "hz": 0.0
+        }
+      ]
+    },
+    "range_requests": 2,
+    "range_bytes": 1511171
+  },
+  {
+    "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_024107_212_01.mcap",
+    "size": 61808755,
+    "metadata": {
+      "x-oss-meta-capturedate": "2026-10-24",
+      "x-oss-meta-check-preview": "false",
+      "x-oss-meta-datadomain": "ego_human_data",
+      "x-oss-meta-datakind": "head_cam",
+      "x-oss-meta-devicedir": "0005_device",
+      "x-oss-meta-deviceno": "0005",
+      "x-oss-meta-duration": "14.502",
+      "x-oss-meta-error-message": "NO_FR_TOPIC",
+      "x-oss-meta-etag": "7E10875429FF33C0454006C163EBEB94",
+      "x-oss-meta-fileformat": "mcap",
+      "x-oss-meta-filesize": "61808755",
+      "x-oss-meta-lastmodified": "2026-10-24T07:02:47.000Z",
+      "x-oss-meta-objectrole": "data",
+      "x-oss-meta-ossmetadata": "{}",
+      "x-oss-meta-osspath": "oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_024107_212_01.mcap",
+      "x-oss-meta-relativepath": "261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_024107_212_01.mcap",
+      "x-oss-meta-rootprefix": "original_data",
+      "x-oss-meta-sessionname": "261024",
+      "x-oss-meta-storageclass": "Standard"
+    },
+    "summary": {
+      "file": "SSI_IRIS2_EGO_All_0005_20261024_024107_212_01.mcap",
+      "duration": "14.502s",
+      "duration_sec": 14.502,
+      "message_count": 8717,
+      "channel_count": 7,
+      "schema_count": 3,
+      "chunk_count": 15,
+      "size_mb": 61.8,
+      "start": "2026-10-24T10:41:07.410703",
+      "end": "2026-10-24T10:41:21.912365",
+      "channels": [
+        {
+          "topic": "/robot0/sensor_msgs/front_center/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 433,
+          "hz": 29.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/front_left/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 430,
+          "hz": 29.7
+        },
+        {
+          "topic": "/robot0/sensor_msgs/front_right/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 429,
+          "hz": 29.6
+        },
+        {
+          "topic": "/robot0/sensor_msgs/rear_left/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 431,
+          "hz": 29.7
+        },
+        {
+          "topic": "/robot0/sensor_msgs/rear_right/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 434,
+          "hz": 29.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/imu",
+          "type": "sensor_msgs/Imu",
+          "encoding": "ros1",
+          "msgs": 6560,
+          "hz": 452.4
+        },
+        {
+          "topic": "/robot0/audio_common_msgs/audio",
+          "type": "foxglove.RawAudio",
+          "encoding": "protobuf",
+          "msgs": 0,
+          "hz": 0.0
+        }
+      ]
+    },
+    "range_requests": 2,
+    "range_bytes": 2039923
+  },
+  {
+    "key": "original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_054444_887_01.mcap",
+    "size": 152021775,
+    "metadata": {
+      "x-oss-meta-capturedate": "2026-10-24",
+      "x-oss-meta-check-preview": "false",
+      "x-oss-meta-datadomain": "ego_human_data",
+      "x-oss-meta-datakind": "head_cam",
+      "x-oss-meta-devicedir": "0005_device",
+      "x-oss-meta-deviceno": "0005",
+      "x-oss-meta-duration": "41.294",
+      "x-oss-meta-error-message": "NO_FR_TOPIC",
+      "x-oss-meta-etag": "2CBCB0643ED613EAED6BCF59007FD240-60",
+      "x-oss-meta-fileformat": "mcap",
+      "x-oss-meta-filesize": "152021775",
+      "x-oss-meta-lastmodified": "2026-10-24T07:10:53.000Z",
+      "x-oss-meta-objectrole": "data",
+      "x-oss-meta-ossmetadata": "{}",
+      "x-oss-meta-osspath": "oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_054444_887_01.mcap",
+      "x-oss-meta-relativepath": "261024/0005_device/SSI_IRIS2_EGO_All_0005_20261024_054444_887_01.mcap",
+      "x-oss-meta-rootprefix": "original_data",
+      "x-oss-meta-sessionname": "261024",
+      "x-oss-meta-storageclass": "Standard"
+    },
+    "summary": {
+      "file": "SSI_IRIS2_EGO_All_0005_20261024_054444_887_01.mcap",
+      "duration": "41.294s",
+      "duration_sec": 41.294,
+      "message_count": 24816,
+      "channel_count": 7,
+      "schema_count": 3,
+      "chunk_count": 37,
+      "size_mb": 152.0,
+      "start": "2026-10-24T13:44:45.091571",
+      "end": "2026-10-24T13:45:26.385503",
+      "channels": [
+        {
+          "topic": "/robot0/sensor_msgs/front_center/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 1232,
+          "hz": 29.8
+        },
+        {
+          "topic": "/robot0/sensor_msgs/front_left/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 1203,
+          "hz": 29.1
+        },
+        {
+          "topic": "/robot0/sensor_msgs/front_right/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 1233,
+          "hz": 29.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/rear_left/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 1235,
+          "hz": 29.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/rear_right/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 1233,
+          "hz": 29.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/imu",
+          "type": "sensor_msgs/Imu",
+          "encoding": "ros1",
+          "msgs": 18680,
+          "hz": 452.4
+        },
+        {
+          "topic": "/robot0/audio_common_msgs/audio",
+          "type": "foxglove.RawAudio",
+          "encoding": "protobuf",
+          "msgs": 0,
+          "hz": 0.0
+        }
+      ]
+    },
+    "range_requests": 2,
+    "range_bytes": 2075407
+  },
+  {
+    "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_095320_235_01.mcap",
+    "size": 21328016,
+    "metadata": {
+      "x-oss-meta-capturedate": "2026-10-23",
+      "x-oss-meta-check-preview": "false",
+      "x-oss-meta-datadomain": "ego_human_data",
+      "x-oss-meta-datakind": "head_cam",
+      "x-oss-meta-devicedir": "0005_device",
+      "x-oss-meta-deviceno": "0005",
+      "x-oss-meta-duration": "3.809",
+      "x-oss-meta-error-message": "NO_FR_TOPIC",
+      "x-oss-meta-etag": "D8A9A1E25E62C28CD285756F42AD2A3B",
+      "x-oss-meta-fileformat": "mcap",
+      "x-oss-meta-filesize": "21328016",
+      "x-oss-meta-lastmodified": "2026-10-24T07:35:43.000Z",
+      "x-oss-meta-objectrole": "data",
+      "x-oss-meta-ossmetadata": "{}",
+      "x-oss-meta-osspath": "oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_095320_235_01.mcap",
+      "x-oss-meta-relativepath": "261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_095320_235_01.mcap",
+      "x-oss-meta-rootprefix": "original_data",
+      "x-oss-meta-sessionname": "261023",
+      "x-oss-meta-storageclass": "Standard"
+    },
+    "summary": {
+      "file": "SSI_IRIS2_EGO_All_0005_20261023_095320_235_01.mcap",
+      "duration": "3.809s",
+      "duration_sec": 3.809,
+      "message_count": 2297,
+      "channel_count": 7,
+      "schema_count": 3,
+      "chunk_count": 6,
+      "size_mb": 21.3,
+      "start": "2026-10-23T17:53:20.671303",
+      "end": "2026-10-23T17:53:24.480309",
+      "channels": [
+        {
+          "topic": "/robot0/sensor_msgs/front_center/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 111,
+          "hz": 29.1
+        },
+        {
+          "topic": "/robot0/sensor_msgs/front_left/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 113,
+          "hz": 29.7
+        },
+        {
+          "topic": "/robot0/sensor_msgs/front_right/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 114,
+          "hz": 29.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/rear_left/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 110,
+          "hz": 28.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/rear_right/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 109,
+          "hz": 28.6
+        },
+        {
+          "topic": "/robot0/sensor_msgs/imu",
+          "type": "sensor_msgs/Imu",
+          "encoding": "ros1",
+          "msgs": 1740,
+          "hz": 456.8
+        },
+        {
+          "topic": "/robot0/audio_common_msgs/audio",
+          "type": "foxglove.RawAudio",
+          "encoding": "protobuf",
+          "msgs": 0,
+          "hz": 0.0
+        }
+      ]
+    },
+    "range_requests": 2,
+    "range_bytes": 1405072
+  },
+  {
+    "key": "original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094801_446_01.mcap",
+    "size": 112019226,
+    "metadata": {
+      "x-oss-meta-capturedate": "2026-10-23",
+      "x-oss-meta-check-preview": "false",
+      "x-oss-meta-datadomain": "ego_human_data",
+      "x-oss-meta-datakind": "head_cam",
+      "x-oss-meta-devicedir": "0005_device",
+      "x-oss-meta-deviceno": "0005",
+      "x-oss-meta-duration": "29.328",
+      "x-oss-meta-error-message": "NO_FR_TOPIC",
+      "x-oss-meta-etag": "9CFC6169DF2F6416CFEBA1166C635A92-44",
+      "x-oss-meta-fileformat": "mcap",
+      "x-oss-meta-filesize": "112019226",
+      "x-oss-meta-lastmodified": "2026-10-24T07:35:12.000Z",
+      "x-oss-meta-objectrole": "data",
+      "x-oss-meta-ossmetadata": "{}",
+      "x-oss-meta-osspath": "oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094801_446_01.mcap",
+      "x-oss-meta-relativepath": "261023/0005_device/SSI_IRIS2_EGO_All_0005_20261023_094801_446_01.mcap",
+      "x-oss-meta-rootprefix": "original_data",
+      "x-oss-meta-sessionname": "261023",
+      "x-oss-meta-storageclass": "Standard"
+    },
+    "summary": {
+      "file": "SSI_IRIS2_EGO_All_0005_20261023_094801_446_01.mcap",
+      "duration": "29.328s",
+      "duration_sec": 29.328,
+      "message_count": 17662,
+      "channel_count": 7,
+      "schema_count": 3,
+      "chunk_count": 27,
+      "size_mb": 112.0,
+      "start": "2026-10-23T17:48:01.656186",
+      "end": "2026-10-23T17:48:30.984288",
+      "channels": [
+        {
+          "topic": "/robot0/sensor_msgs/front_center/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 876,
+          "hz": 29.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/front_left/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 877,
+          "hz": 29.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/front_right/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 877,
+          "hz": 29.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/rear_left/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 875,
+          "hz": 29.8
+        },
+        {
+          "topic": "/robot0/sensor_msgs/rear_right/compressed",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 877,
+          "hz": 29.9
+        },
+        {
+          "topic": "/robot0/sensor_msgs/imu",
+          "type": "sensor_msgs/Imu",
+          "encoding": "ros1",
+          "msgs": 13280,
+          "hz": 452.8
+        },
+        {
+          "topic": "/robot0/audio_common_msgs/audio",
+          "type": "foxglove.RawAudio",
+          "encoding": "protobuf",
+          "msgs": 0,
+          "hz": 0.0
+        }
+      ]
+    },
+    "range_requests": 2,
+    "range_bytes": 1918746
+  },
+  {
+    "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151614_407.mcap",
+    "size": 35383789,
+    "metadata": {
+      "x-oss-meta-capturedate": "2026-09-23",
+      "x-oss-meta-datadomain": "ego_human_data",
+      "x-oss-meta-datakind": "head_cam",
+      "x-oss-meta-devicedir": "001I_device",
+      "x-oss-meta-deviceno": "001I",
+      "x-oss-meta-duration": "13.718",
+      "x-oss-meta-etag": "306620D7E600A4A77E49EEBC7BE21464",
+      "x-oss-meta-fileformat": "mcap",
+      "x-oss-meta-filesize": "35383789",
+      "x-oss-meta-lastmodified": "2026-09-24T07:34:27.000Z",
+      "x-oss-meta-objectrole": "data",
+      "x-oss-meta-ossmetadata": "{}",
+      "x-oss-meta-osspath": "oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_151614_407.mcap",
+      "x-oss-meta-parsedmetadata": "{\"file\": \"SSIEGO_Cam_001I_20260923_151614_407.mcap\", \"duration\": \"13.718s\", \"duration_sec\": 13.718, \"message_count\": 11501, \"channel_count\": 12, \"schema_count\": 6, \"chunk_count\": 35, \"size_mb\": 35.4, \"start\": \"2026-08-25T15:16:18.969186\", \"end\": \"2026-08-25T15:16:32.687282\", \"channels\": [{\"topic\": \"/camera/RR/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 200, \"hz\": 14.6}, {\"topic\": \"/camera/RR/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 200, \"hz\": 14.6}, {\"topic\": \"/camera/FR/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 200, \"hz\": 14.6}, {\"topic\": \"/camera/FR/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 200, \"hz\": 14.6}, {\"topic\": \"/camera/RL/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 200, \"hz\": 14.6}, {\"topic\": \"/camera/RL/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 200, \"hz\": 14.6}, {\"topic\": \"/camera/FL/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 200, \"hz\": 14.6}, {\"topic\": \"/camera/FL/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 200, \"hz\": 14.6}, {\"topic\": \"/clock/anchor\", \"type\": \"headcam.ClockAnchor\", \"encoding\": \"protobuf\", \"msgs\": 1, \"hz\": 0.1}, {\"topic\": \"/record/event\", \"type\": \"headcam.RecordEvent\", \"encoding\": \"protobuf\", \"msgs\": 2, \"hz\": 0.1}, {\"topic\": \"/audio/mic\", \"type\": \"headcam.AudioSample\", \"encoding\": \"protobuf\", \"msgs\": 211, \"hz\": 15.4}, {\"topic\": \"/imu/sample\", \"type\": \"headcam.ImuSample\", \"encoding\": \"protobuf\", \"msgs\": 9687, \"hz\": 706.1}]}",
+      "x-oss-meta-relativepath": "260923/001I_device/SSIEGO_Cam_001I_20260923_151614_407.mcap",
+      "x-oss-meta-rootprefix": "original_data",
+      "x-oss-meta-sessionname": "260923",
+      "x-oss-meta-storageclass": "Standard"
+    },
+    "summary": {
+      "file": "SSIEGO_Cam_001I_20260923_151614_407.mcap",
+      "duration": "13.718s",
+      "duration_sec": 13.718,
+      "message_count": 11501,
+      "channel_count": 12,
+      "schema_count": 6,
+      "chunk_count": 35,
+      "size_mb": 35.4,
+      "start": "2026-08-25T15:16:18.969186",
+      "end": "2026-08-25T15:16:32.687282",
+      "channels": [
+        {
+          "topic": "/camera/RR/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 200,
+          "hz": 14.6
+        },
+        {
+          "topic": "/camera/RR/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 200,
+          "hz": 14.6
+        },
+        {
+          "topic": "/camera/FR/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 200,
+          "hz": 14.6
+        },
+        {
+          "topic": "/camera/FR/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 200,
+          "hz": 14.6
+        },
+        {
+          "topic": "/camera/RL/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 200,
+          "hz": 14.6
+        },
+        {
+          "topic": "/camera/RL/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 200,
+          "hz": 14.6
+        },
+        {
+          "topic": "/camera/FL/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 200,
+          "hz": 14.6
+        },
+        {
+          "topic": "/camera/FL/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 200,
+          "hz": 14.6
+        },
+        {
+          "topic": "/clock/anchor",
+          "type": "headcam.ClockAnchor",
+          "encoding": "protobuf",
+          "msgs": 1,
+          "hz": 0.1
+        },
+        {
+          "topic": "/record/event",
+          "type": "headcam.RecordEvent",
+          "encoding": "protobuf",
+          "msgs": 2,
+          "hz": 0.1
+        },
+        {
+          "topic": "/audio/mic",
+          "type": "headcam.AudioSample",
+          "encoding": "protobuf",
+          "msgs": 211,
+          "hz": 15.4
+        },
+        {
+          "topic": "/imu/sample",
+          "type": "headcam.ImuSample",
+          "encoding": "protobuf",
+          "msgs": 9687,
+          "hz": 706.1
+        }
+      ]
+    },
+    "range_requests": 2,
+    "range_bytes": 1829357
+  },
+  {
+    "key": "original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_152140_442.mcap",
+    "size": 37295099,
+    "metadata": {
+      "x-oss-meta-capturedate": "2026-09-23",
+      "x-oss-meta-datadomain": "ego_human_data",
+      "x-oss-meta-datakind": "head_cam",
+      "x-oss-meta-devicedir": "001I_device",
+      "x-oss-meta-deviceno": "001I",
+      "x-oss-meta-duration": "13.261",
+      "x-oss-meta-etag": "E3C43E04F8AC02AC095338635A83D3F0",
+      "x-oss-meta-fileformat": "mcap",
+      "x-oss-meta-filesize": "37295099",
+      "x-oss-meta-lastmodified": "2026-09-24T07:34:50.000Z",
+      "x-oss-meta-objectrole": "data",
+      "x-oss-meta-ossmetadata": "{}",
+      "x-oss-meta-osspath": "oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/260923/001I_device/SSIEGO_Cam_001I_20260923_152140_442.mcap",
+      "x-oss-meta-parsedmetadata": "{\"file\": \"SSIEGO_Cam_001I_20260923_152140_442.mcap\", \"duration\": \"13.261s\", \"duration_sec\": 13.261, \"message_count\": 11252, \"channel_count\": 12, \"schema_count\": 6, \"chunk_count\": 37, \"size_mb\": 37.3, \"start\": \"2026-08-25T15:21:45.045649\", \"end\": \"2026-08-25T15:21:58.306774\", \"channels\": [{\"topic\": \"/camera/RR/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 212, \"hz\": 16.0}, {\"topic\": \"/camera/RR/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 212, \"hz\": 16.0}, {\"topic\": \"/camera/FR/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 212, \"hz\": 16.0}, {\"topic\": \"/camera/FR/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 212, \"hz\": 16.0}, {\"topic\": \"/camera/RL/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 212, \"hz\": 16.0}, {\"topic\": \"/camera/RL/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 212, \"hz\": 16.0}, {\"topic\": \"/camera/FL/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 212, \"hz\": 16.0}, {\"topic\": \"/camera/FL/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 212, \"hz\": 16.0}, {\"topic\": \"/clock/anchor\", \"type\": \"headcam.ClockAnchor\", \"encoding\": \"protobuf\", \"msgs\": 1, \"hz\": 0.1}, {\"topic\": \"/record/event\", \"type\": \"headcam.RecordEvent\", \"encoding\": \"protobuf\", \"msgs\": 2, \"hz\": 0.2}, {\"topic\": \"/audio/mic\", \"type\": \"headcam.AudioSample\", \"encoding\": \"protobuf\", \"msgs\": 204, \"hz\": 15.4}, {\"topic\": \"/imu/sample\", \"type\": \"headcam.ImuSample\", \"encoding\": \"protobuf\", \"msgs\": 9349, \"hz\": 705.0}]}",
+      "x-oss-meta-relativepath": "260923/001I_device/SSIEGO_Cam_001I_20260923_152140_442.mcap",
+      "x-oss-meta-rootprefix": "original_data",
+      "x-oss-meta-sessionname": "260923",
+      "x-oss-meta-storageclass": "Standard"
+    },
+    "summary": {
+      "file": "SSIEGO_Cam_001I_20260923_152140_442.mcap",
+      "duration": "13.261s",
+      "duration_sec": 13.261,
+      "message_count": 11252,
+      "channel_count": 12,
+      "schema_count": 6,
+      "chunk_count": 37,
+      "size_mb": 37.3,
+      "start": "2026-08-25T15:21:45.045649",
+      "end": "2026-08-25T15:21:58.306774",
+      "channels": [
+        {
+          "topic": "/camera/RR/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 212,
+          "hz": 16.0
+        },
+        {
+          "topic": "/camera/RR/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 212,
+          "hz": 16.0
+        },
+        {
+          "topic": "/camera/FR/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 212,
+          "hz": 16.0
+        },
+        {
+          "topic": "/camera/FR/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 212,
+          "hz": 16.0
+        },
+        {
+          "topic": "/camera/RL/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 212,
+          "hz": 16.0
+        },
+        {
+          "topic": "/camera/RL/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 212,
+          "hz": 16.0
+        },
+        {
+          "topic": "/camera/FL/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 212,
+          "hz": 16.0
+        },
+        {
+          "topic": "/camera/FL/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 212,
+          "hz": 16.0
+        },
+        {
+          "topic": "/clock/anchor",
+          "type": "headcam.ClockAnchor",
+          "encoding": "protobuf",
+          "msgs": 1,
+          "hz": 0.1
+        },
+        {
+          "topic": "/record/event",
+          "type": "headcam.RecordEvent",
+          "encoding": "protobuf",
+          "msgs": 2,
+          "hz": 0.2
+        },
+        {
+          "topic": "/audio/mic",
+          "type": "headcam.AudioSample",
+          "encoding": "protobuf",
+          "msgs": 204,
+          "hz": 15.4
+        },
+        {
+          "topic": "/imu/sample",
+          "type": "headcam.ImuSample",
+          "encoding": "protobuf",
+          "msgs": 9349,
+          "hz": 705.0
+        }
+      ]
+    },
+    "range_requests": 2,
+    "range_bytes": 1643515
+  },
+  {
+    "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155512_985.mcap",
+    "size": 45796902,
+    "metadata": {
+      "x-oss-meta-capturedate": "2026-09-22",
+      "x-oss-meta-datadomain": "ego_human_data",
+      "x-oss-meta-datakind": "head_cam",
+      "x-oss-meta-devicedir": "001I_device",
+      "x-oss-meta-deviceno": "001I",
+      "x-oss-meta-duration": "14.154",
+      "x-oss-meta-etag": "44B6D0B0473327D324621E1BE6E3C76C",
+      "x-oss-meta-fileformat": "mcap",
+      "x-oss-meta-filesize": "45796902",
+      "x-oss-meta-lastmodified": "2026-09-24T08:18:42.000Z",
+      "x-oss-meta-objectrole": "data",
+      "x-oss-meta-ossmetadata": "{}",
+      "x-oss-meta-osspath": "oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155512_985.mcap",
+      "x-oss-meta-parsedmetadata": "{\"file\": \"SSIEGO_Cam_001I_20260922_155512_985.mcap\", \"duration\": \"14.154s\", \"duration_sec\": 14.154, \"message_count\": 13357, \"channel_count\": 12, \"schema_count\": 6, \"chunk_count\": 45, \"size_mb\": 45.8, \"start\": \"2026-09-22T15:55:17.547091\", \"end\": \"2026-09-22T15:55:31.701578\", \"channels\": [{\"topic\": \"/camera/RR/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 257, \"hz\": 18.2}, {\"topic\": \"/camera/RR/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 257, \"hz\": 18.2}, {\"topic\": \"/camera/FR/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 257, \"hz\": 18.2}, {\"topic\": \"/camera/FR/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 257, \"hz\": 18.2}, {\"topic\": \"/camera/RL/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 257, \"hz\": 18.2}, {\"topic\": \"/camera/RL/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 257, \"hz\": 18.2}, {\"topic\": \"/camera/FL/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 257, \"hz\": 18.2}, {\"topic\": \"/camera/FL/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 257, \"hz\": 18.2}, {\"topic\": \"/clock/anchor\", \"type\": \"headcam.ClockAnchor\", \"encoding\": \"protobuf\", \"msgs\": 1, \"hz\": 0.1}, {\"topic\": \"/record/event\", \"type\": \"headcam.RecordEvent\", \"encoding\": \"protobuf\", \"msgs\": 2, \"hz\": 0.1}, {\"topic\": \"/audio/mic\", \"type\": \"headcam.AudioSample\", \"encoding\": \"protobuf\", \"msgs\": 218, \"hz\": 15.4}, {\"topic\": \"/imu/sample\", \"type\": \"headcam.ImuSample\", \"encoding\": \"protobuf\", \"msgs\": 11080, \"hz\": 782.8}]}",
+      "x-oss-meta-relativepath": "260922/001I_device/SSIEGO_Cam_001I_20260922_155512_985.mcap",
+      "x-oss-meta-rootprefix": "original_data",
+      "x-oss-meta-sessionname": "260922",
+      "x-oss-meta-storageclass": "Standard"
+    },
+    "summary": {
+      "file": "SSIEGO_Cam_001I_20260922_155512_985.mcap",
+      "duration": "14.154s",
+      "duration_sec": 14.154,
+      "message_count": 13357,
+      "channel_count": 12,
+      "schema_count": 6,
+      "chunk_count": 45,
+      "size_mb": 45.8,
+      "start": "2026-09-22T15:55:17.547091",
+      "end": "2026-09-22T15:55:31.701578",
+      "channels": [
+        {
+          "topic": "/camera/RR/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 257,
+          "hz": 18.2
+        },
+        {
+          "topic": "/camera/RR/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 257,
+          "hz": 18.2
+        },
+        {
+          "topic": "/camera/FR/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 257,
+          "hz": 18.2
+        },
+        {
+          "topic": "/camera/FR/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 257,
+          "hz": 18.2
+        },
+        {
+          "topic": "/camera/RL/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 257,
+          "hz": 18.2
+        },
+        {
+          "topic": "/camera/RL/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 257,
+          "hz": 18.2
+        },
+        {
+          "topic": "/camera/FL/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 257,
+          "hz": 18.2
+        },
+        {
+          "topic": "/camera/FL/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 257,
+          "hz": 18.2
+        },
+        {
+          "topic": "/clock/anchor",
+          "type": "headcam.ClockAnchor",
+          "encoding": "protobuf",
+          "msgs": 1,
+          "hz": 0.1
+        },
+        {
+          "topic": "/record/event",
+          "type": "headcam.RecordEvent",
+          "encoding": "protobuf",
+          "msgs": 2,
+          "hz": 0.1
+        },
+        {
+          "topic": "/audio/mic",
+          "type": "headcam.AudioSample",
+          "encoding": "protobuf",
+          "msgs": 218,
+          "hz": 15.4
+        },
+        {
+          "topic": "/imu/sample",
+          "type": "headcam.ImuSample",
+          "encoding": "protobuf",
+          "msgs": 11080,
+          "hz": 782.8
+        }
+      ]
+    },
+    "range_requests": 2,
+    "range_bytes": 1756710
+  },
+  {
+    "key": "original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155147_429.mcap",
+    "size": 46004003,
+    "metadata": {
+      "x-oss-meta-capturedate": "2026-09-22",
+      "x-oss-meta-datadomain": "ego_human_data",
+      "x-oss-meta-datakind": "head_cam",
+      "x-oss-meta-devicedir": "001I_device",
+      "x-oss-meta-deviceno": "001I",
+      "x-oss-meta-duration": "15.181",
+      "x-oss-meta-etag": "7ABF0EE97F0F3BC9D851B21F3E5001D2",
+      "x-oss-meta-fileformat": "mcap",
+      "x-oss-meta-filesize": "46004003",
+      "x-oss-meta-lastmodified": "2026-09-24T08:18:30.000Z",
+      "x-oss-meta-objectrole": "data",
+      "x-oss-meta-ossmetadata": "{}",
+      "x-oss-meta-osspath": "oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/260922/001I_device/SSIEGO_Cam_001I_20260922_155147_429.mcap",
+      "x-oss-meta-parsedmetadata": "{\"file\": \"SSIEGO_Cam_001I_20260922_155147_429.mcap\", \"duration\": \"15.181s\", \"duration_sec\": 15.181, \"message_count\": 13431, \"channel_count\": 12, \"schema_count\": 6, \"chunk_count\": 45, \"size_mb\": 46.0, \"start\": \"2026-09-22T15:51:51.951966\", \"end\": \"2026-09-22T15:52:07.132962\", \"channels\": [{\"topic\": \"/camera/RR/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 258, \"hz\": 17.0}, {\"topic\": \"/camera/RR/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 258, \"hz\": 17.0}, {\"topic\": \"/camera/FR/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 258, \"hz\": 17.0}, {\"topic\": \"/camera/FR/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 258, \"hz\": 17.0}, {\"topic\": \"/camera/RL/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 258, \"hz\": 17.0}, {\"topic\": \"/camera/RL/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 258, \"hz\": 17.0}, {\"topic\": \"/camera/FL/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 258, \"hz\": 17.0}, {\"topic\": \"/camera/FL/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 258, \"hz\": 17.0}, {\"topic\": \"/clock/anchor\", \"type\": \"headcam.ClockAnchor\", \"encoding\": \"protobuf\", \"msgs\": 1, \"hz\": 0.1}, {\"topic\": \"/record/event\", \"type\": \"headcam.RecordEvent\", \"encoding\": \"protobuf\", \"msgs\": 2, \"hz\": 0.1}, {\"topic\": \"/audio/mic\", \"type\": \"headcam.AudioSample\", \"encoding\": \"protobuf\", \"msgs\": 234, \"hz\": 15.4}, {\"topic\": \"/imu/sample\", \"type\": \"headcam.ImuSample\", \"encoding\": \"protobuf\", \"msgs\": 11130, \"hz\": 733.2}]}",
+      "x-oss-meta-relativepath": "260922/001I_device/SSIEGO_Cam_001I_20260922_155147_429.mcap",
+      "x-oss-meta-rootprefix": "original_data",
+      "x-oss-meta-sessionname": "260922",
+      "x-oss-meta-storageclass": "Standard"
+    },
+    "summary": {
+      "file": "SSIEGO_Cam_001I_20260922_155147_429.mcap",
+      "duration": "15.181s",
+      "duration_sec": 15.181,
+      "message_count": 13431,
+      "channel_count": 12,
+      "schema_count": 6,
+      "chunk_count": 45,
+      "size_mb": 46.0,
+      "start": "2026-09-22T15:51:51.951966",
+      "end": "2026-09-22T15:52:07.132962",
+      "channels": [
+        {
+          "topic": "/camera/RR/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 258,
+          "hz": 17.0
+        },
+        {
+          "topic": "/camera/RR/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 258,
+          "hz": 17.0
+        },
+        {
+          "topic": "/camera/FR/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 258,
+          "hz": 17.0
+        },
+        {
+          "topic": "/camera/FR/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 258,
+          "hz": 17.0
+        },
+        {
+          "topic": "/camera/RL/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 258,
+          "hz": 17.0
+        },
+        {
+          "topic": "/camera/RL/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 258,
+          "hz": 17.0
+        },
+        {
+          "topic": "/camera/FL/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 258,
+          "hz": 17.0
+        },
+        {
+          "topic": "/camera/FL/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 258,
+          "hz": 17.0
+        },
+        {
+          "topic": "/clock/anchor",
+          "type": "headcam.ClockAnchor",
+          "encoding": "protobuf",
+          "msgs": 1,
+          "hz": 0.1
+        },
+        {
+          "topic": "/record/event",
+          "type": "headcam.RecordEvent",
+          "encoding": "protobuf",
+          "msgs": 2,
+          "hz": 0.1
+        },
+        {
+          "topic": "/audio/mic",
+          "type": "headcam.AudioSample",
+          "encoding": "protobuf",
+          "msgs": 234,
+          "hz": 15.4
+        },
+        {
+          "topic": "/imu/sample",
+          "type": "headcam.ImuSample",
+          "encoding": "protobuf",
+          "msgs": 11130,
+          "hz": 733.2
+        }
+      ]
+    },
+    "range_requests": 2,
+    "range_bytes": 1963811
+  },
+  {
+    "key": "original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_130115_116.mcap",
+    "size": 692879390,
+    "metadata": {
+      "x-oss-meta-capturedate": "2026-09-23",
+      "x-oss-meta-datadomain": "ego_human_data",
+      "x-oss-meta-datakind": "head_cam",
+      "x-oss-meta-devicedir": "002D_device",
+      "x-oss-meta-deviceno": "002D",
+      "x-oss-meta-duration": "167.865",
+      "x-oss-meta-etag": "02AC16BA9B6833596ABACE70E6A03C89-270",
+      "x-oss-meta-fileformat": "mcap",
+      "x-oss-meta-filesize": "692879390",
+      "x-oss-meta-lastmodified": "2026-09-24T07:38:27.000Z",
+      "x-oss-meta-objectrole": "data",
+      "x-oss-meta-ossmetadata": "{}",
+      "x-oss-meta-osspath": "oss://ss-oss-data-platform/original_data/ego_human_data/head_cam/260923/002D_device/SSIEGO_Cam_002D_20260923_130115_116.mcap",
+      "x-oss-meta-parsedmetadata": "{\"file\": \"SSIEGO_Cam_002D_20260923_130115_116.mcap\", \"duration\": \"167.865s\", \"duration_sec\": 167.865, \"message_count\": 197799, \"channel_count\": 12, \"schema_count\": 6, \"chunk_count\": 673, \"size_mb\": 692.9, \"start\": \"2026-09-23T13:01:19.560507\", \"end\": \"2026-09-23T13:04:07.425237\", \"channels\": [{\"topic\": \"/camera/RR/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 4026, \"hz\": 24.0}, {\"topic\": \"/camera/RR/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 4026, \"hz\": 24.0}, {\"topic\": \"/camera/FR/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 4026, \"hz\": 24.0}, {\"topic\": \"/camera/FR/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 4026, \"hz\": 24.0}, {\"topic\": \"/camera/RL/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 4026, \"hz\": 24.0}, {\"topic\": \"/camera/RL/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 4026, \"hz\": 24.0}, {\"topic\": \"/camera/FL/video\", \"type\": \"foxglove.CompressedVideo\", \"encoding\": \"protobuf\", \"msgs\": 4026, \"hz\": 24.0}, {\"topic\": \"/camera/FL/meta\", \"type\": \"headcam.FrameMeta\", \"encoding\": \"protobuf\", \"msgs\": 4026, \"hz\": 24.0}, {\"topic\": \"/clock/anchor\", \"type\": \"headcam.ClockAnchor\", \"encoding\": \"protobuf\", \"msgs\": 1, \"hz\": 0.0}, {\"topic\": \"/record/event\", \"type\": \"headcam.RecordEvent\", \"encoding\": \"protobuf\", \"msgs\": 2, \"hz\": 0.0}, {\"topic\": \"/audio/mic\", \"type\": \"headcam.AudioSample\", \"encoding\": \"protobuf\", \"msgs\": 2621, \"hz\": 15.6}, {\"topic\": \"/imu/sample\", \"type\": \"headcam.ImuSample\", \"encoding\": \"protobuf\", \"msgs\": 162967, \"hz\": 970.8}]}",
+      "x-oss-meta-relativepath": "260923/002D_device/SSIEGO_Cam_002D_20260923_130115_116.mcap",
+      "x-oss-meta-rootprefix": "original_data",
+      "x-oss-meta-sessionname": "260923",
+      "x-oss-meta-storageclass": "Standard"
+    },
+    "summary": {
+      "file": "SSIEGO_Cam_002D_20260923_130115_116.mcap",
+      "duration": "167.865s",
+      "duration_sec": 167.865,
+      "message_count": 197799,
+      "channel_count": 12,
+      "schema_count": 6,
+      "chunk_count": 673,
+      "size_mb": 692.9,
+      "start": "2026-09-23T13:01:19.560507",
+      "end": "2026-09-23T13:04:07.425237",
+      "channels": [
+        {
+          "topic": "/camera/RR/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 4026,
+          "hz": 24.0
+        },
+        {
+          "topic": "/camera/RR/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 4026,
+          "hz": 24.0
+        },
+        {
+          "topic": "/camera/FR/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 4026,
+          "hz": 24.0
+        },
+        {
+          "topic": "/camera/FR/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 4026,
+          "hz": 24.0
+        },
+        {
+          "topic": "/camera/RL/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 4026,
+          "hz": 24.0
+        },
+        {
+          "topic": "/camera/RL/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 4026,
+          "hz": 24.0
+        },
+        {
+          "topic": "/camera/FL/video",
+          "type": "foxglove.CompressedVideo",
+          "encoding": "protobuf",
+          "msgs": 4026,
+          "hz": 24.0
+        },
+        {
+          "topic": "/camera/FL/meta",
+          "type": "headcam.FrameMeta",
+          "encoding": "protobuf",
+          "msgs": 4026,
+          "hz": 24.0
+        },
+        {
+          "topic": "/clock/anchor",
+          "type": "headcam.ClockAnchor",
+          "encoding": "protobuf",
+          "msgs": 1,
+          "hz": 0.0
+        },
+        {
+          "topic": "/record/event",
+          "type": "headcam.RecordEvent",
+          "encoding": "protobuf",
+          "msgs": 2,
+          "hz": 0.0
+        },
+        {
+          "topic": "/audio/mic",
+          "type": "headcam.AudioSample",
+          "encoding": "protobuf",
+          "msgs": 2621,
+          "hz": 15.6
+        },
+        {
+          "topic": "/imu/sample",
+          "type": "headcam.ImuSample",
+          "encoding": "protobuf",
+          "msgs": 162967,
+          "hz": 970.8
+        }
+      ]
+    },
+    "range_requests": 2,
+    "range_bytes": 1867806
+  }
+]
