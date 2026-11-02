@@ -285,6 +285,42 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(len(page['directories']), 5)
         self.assertIsNone(page['next_offset'])
 
+    def test_selected_files_listing_and_upload(self):
+        a = self.file()
+        b = self.file('SSIEGO_Cam_ABC123_20261027_002.mcap')
+        self.file('SSIEGO_Cam_ABC123_20261027_003.mcap')
+        (self.data / 'link.mcap').symlink_to(a)
+        self.file('unfinished.mcap.incomplete', b'incomplete')
+        code, listing = self.request('GET', '/files?' + urlencode({'path': str(self.data)}))
+        self.assertEqual(code, 200)
+        self.assertEqual(len(listing['files']), 3)
+        self.assertEqual(listing['files'][0]['size'], a.stat().st_size)
+        code, task = self.request('POST', '/upload', {'path': str(self.data), 'files': [b.name, a.name]})
+        self.assertEqual(code, 202)
+        result = self.wait(task)
+        self.assertEqual((result['uploaded'], result['total'], result['mode']), (2, 2, 'files'))
+        self.assertEqual({x['file'] for x in result['results']}, {a.name, b.name})
+        code, task = self.request('POST', '/upload', {'path': str(self.data), 'files': [a.name]})
+        self.assertEqual(code, 202)
+        self.assertEqual(self.wait(task)['skipped'], 1)
+        for files in [[], [a.name, a.name], ['../' + a.name], ['link.mcap'], ['missing.mcap'], ['unfinished.mcap.incomplete'], [1], None]:
+            self.assertEqual(self.request('POST', '/upload', {'path': str(self.data), 'files': files})[0], 400, files)
+
+    def test_selection_retry_and_directory_overlap(self):
+        a = self.file()
+        b = self.file('SSIEGO_Cam_ABC123_20261027_002.mcap')
+        self.rules(delay=.3)
+        body = {'path': str(self.data), 'files': [a.name, b.name]}
+        _, task = self.request('POST', '/upload', body)
+        _, duplicate = self.request('POST', '/upload', dict(body, files=[b.name, a.name]))
+        self.assertEqual(task['task_id'], duplicate['task_id'])
+        self.assertTrue(duplicate['duplicate'])
+        self.assertEqual(self.request('POST', '/upload', {'path': str(self.data)})[0], 409)
+        self.assertEqual(self.request('POST', '/upload', dict(body, files=[a.name]))[0], 409)
+        self.assertEqual(self.wait(task)['uploaded'], 2)
+        self.stop(); self.start()
+        self.assertEqual(self.request('GET', task['status_url'])[1]['files'], sorted([a.name, b.name]))
+
     def test_crc_errors_and_malformed_http(self):
         content = bytearray(mcap('zstd'))
         content[-41] ^= 1  # data CRC, leaving record framing intact

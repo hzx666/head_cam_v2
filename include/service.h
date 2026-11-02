@@ -62,6 +62,7 @@ typedef struct {
 int tasks_start(task_manager *manager, char *error);
 void tasks_close(task_manager *manager);
 cJSON *task_submit(task_manager *manager, const char *path, int *http_status);
+cJSON *task_submit_files(task_manager *manager, const char *path, const cJSON *files, int *http_status);
 cJSON *task_get(task_manager *manager, const char *id, int *http_status);
 int http_serve(task_manager *manager, const char *host, unsigned port, const char *token);
 #endif

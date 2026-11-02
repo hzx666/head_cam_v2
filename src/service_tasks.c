@@ -35,6 +35,9 @@ cJSON *task_get(task_manager *m,const char *id,int *status) {
     *status=out?200:404; return out?out:failure("Task not found");
 }
 cJSON *task_submit(task_manager *m,const char *raw,int *status) {
+    return task_submit_files(m,raw,NULL,status);
+}
+cJSON *task_submit_files(task_manager *m,const char *raw,const cJSON *files,int *status) {
     char path[PATH_MAX]; struct stat st;
     *status=400;
     if(!raw || raw[0]!='/' || strlen(raw)>=PATH_MAX || !realpath(raw,path)) return failure("path must be an existing absolute device directory");
@@ -43,13 +46,40 @@ cJSON *task_submit(task_manager *m,const char *raw,int *status) {
     if(path_inside(path,settings.runtime)) return failure("Service runtime directory cannot be uploaded");
     DIR *dir=opendir(path);
     if(!dir) { *status=403; return failure("Directory is not readable"); } closedir(dir);
+    cJSON *normalized=NULL;
+    if(files) {
+        if(!cJSON_IsArray(files) || cJSON_GetArraySize(files)<1 || cJSON_GetArraySize(files)>100) return failure("files must contain 1 to 100 file names");
+        normalized=cJSON_CreateArray();
+        const cJSON *entry;
+        cJSON_ArrayForEach(entry,files) {
+            const char *name=cJSON_IsString(entry)?entry->valuestring:NULL;
+            char full[PATH_MAX],resolved[PATH_MAX]; size_t n=name?strlen(name):0;
+            if(!name || n<5 || strcasecmp(name+n-5,".mcap") || strchr(name,'/') || strchr(name,'\\') ||
+               path_join(full,sizeof(full),path,name) || lstat(full,&st) || !S_ISREG(st.st_mode) ||
+               !realpath(full,resolved) || strcmp(full,resolved) || access(full,R_OK)) {
+                cJSON_Delete(normalized); return failure("files must name readable regular .mcap files directly inside path (no symlinks)");
+            }
+            const cJSON *prior;
+            cJSON_ArrayForEach(prior,normalized) if(!strcmp(prior->valuestring,name)) {
+                cJSON_Delete(normalized); return failure("Duplicate file name in files");
+            }
+            cJSON_AddItemToArray(normalized,cJSON_CreateString(name));
+        }
+        /* Canonical order makes retry detection independent of selection order. */
+        for(cJSON *a=normalized->child;a;a=a->next) for(cJSON *b=a->next;b;b=b->next)
+            if(strcmp(a->valuestring,b->valuestring)>0) { char *v=a->valuestring; a->valuestring=b->valuestring; b->valuestring=v; }
+    }
     pthread_mutex_lock(&m->mutex);
     cJSON *out=NULL; task *selected=NULL; int duplicate=0,count=0;
     if(m->closing || m->storage_failed) { *status=503; out=failure("Service is stopping or task storage is unavailable"); goto done; }
     for(task *t=m->first;t;t=t->next) if(active(str(t->json,"status"))) {
         count++;
         const char *previous=str(t->json,"path");
-        if(!strcmp(path,previous)) { selected=t; duplicate=1; break; }
+        if(!strcmp(path,previous)) {
+            const cJSON *old=cJSON_GetObjectItemCaseSensitive(t->json,"files");
+            if((!old && !normalized) || (old && normalized && cJSON_Compare(old,normalized,1))) { selected=t; duplicate=1; break; }
+            *status=409; out=failure("Directory overlaps an active upload task"); goto done;
+        }
         if(path_inside(path,previous) || path_inside(previous,path)) { *status=409; out=failure("Directory overlaps an active upload task"); goto done; }
     }
     if(!selected) {
@@ -61,6 +91,8 @@ cJSON *task_submit(task_manager *m,const char *raw,int *status) {
         if(!selected) { *status=503; out=failure("Insufficient memory"); goto done; }
         selected->json=cJSON_CreateObject(); timestamp(now);
         js(selected->json,"task_id",id); js(selected->json,"path",path); js(selected->json,"status","queued");
+        js(selected->json,"mode",normalized?"files":"directory");
+        if(normalized) cJSON_AddItemToObject(selected->json,"files",cJSON_Duplicate(normalized,1));
         js(selected->json,"created_at",now); js(selected->json,"updated_at",now);
         const char *counters[]={"total","processed","uploaded","skipped","empty","failed","ignored"};
         for(size_t i=0;i<7;i++) json_number(selected->json,counters[i],0);
@@ -74,6 +106,7 @@ cJSON *task_submit(task_manager *m,const char *raw,int *status) {
     char url[64]; snprintf(url,sizeof(url),"/upload/%s",str(selected->json,"task_id")); js(out,"status_url",url);
     *status=duplicate?200:202;
 done:
+    cJSON_Delete(normalized);
     pthread_mutex_unlock(&m->mutex); return out;
 }
 
@@ -138,7 +171,26 @@ static void execute(task_manager *m,task *t) {
     snprintf(root,sizeof(root),"%s",str(t->json,"path")); js(t->json,"status","scanning"); timestamp(now); js(t->json,"started_at",now);
     int rc=save(m,t); pthread_mutex_unlock(&m->mutex);
     if(rc) goto cleanup;
-    rc=scan(&p,root,0,error);
+    const cJSON *files=cJSON_GetObjectItemCaseSensitive(t->json,"files");
+    if(!files) rc=scan(&p,root,0,error);
+    else {
+        p.cap=(size_t)cJSON_GetArraySize(files); p.items=calloc(p.cap,sizeof(plan));
+        if(!p.items) { rc=-1; snprintf(error,sizeof(error),"Insufficient memory"); }
+        else {
+            const cJSON *entry;
+            cJSON_ArrayForEach(entry,files) {
+                char full[PATH_MAX],dest[PATH_MAX+1024];
+                if(!cJSON_IsString(entry) || strchr(entry->valuestring,'/') || strchr(entry->valuestring,'\\') ||
+                   path_join(full,sizeof(full),root,entry->valuestring)) { rc=-1; snprintf(error,sizeof(error),"Invalid selected file"); break; }
+                plan *item=&p.items[p.count++]; item->path=strdup(full);
+                if(!item->path) { rc=-1; snprintf(error,sizeof(error),"Insufficient memory"); break; }
+                if(!destination_for(entry->valuestring,dest,sizeof(dest),item->error)) {
+                    item->dest=strdup(dest);
+                    if(!item->dest) { rc=-1; snprintf(error,sizeof(error),"Insufficient memory"); break; }
+                }
+            }
+        }
+    }
     if(!rc && p.count) {
         qsort(p.items,p.count,sizeof(plan),by_path);
         plan **sorted=malloc(p.count*sizeof(*sorted));

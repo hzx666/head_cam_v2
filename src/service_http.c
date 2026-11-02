@@ -45,7 +45,7 @@ static int decode(const char *in,char *out,size_t cap) {
     out[used]=0; return 0;
 }
 static int sort_names(const void *a,const void *b) { return strcmp(*(char*const*)a,*(char*const*)b); }
-static cJSON *browse(const char *query,int *status) {
+static cJSON *browse(const char *query,int *status,int file_mode) {
     char raw[PATH_MAX]={0}; unsigned long offset=0; int path_seen=0,offset_seen=0;
     if(query && *query) {
         char *copy=strdup(query),*state=NULL;
@@ -59,9 +59,10 @@ static cJSON *browse(const char *query,int *status) {
         }
         free(copy);
     }
-    cJSON *out=cJSON_CreateObject(),*entries=cJSON_AddArrayToObject(out,"directories");
+    cJSON *out=cJSON_CreateObject(),*entries=cJSON_AddArrayToObject(out,file_mode?"files":"directories");
     *status=200;
     if(!raw[0]) {
+        if(file_mode) { *status=400; cJSON_Delete(out); return error_json("path is required for file listing"); }
         js(out,"path",""); cJSON_AddNullToObject(out,"parent"); jb(out,"selectable",0);
         if(settings.allowed_root[0]) {
             cJSON *entry=cJSON_CreateObject(); js(entry,"name",settings.allowed_root); js(entry,"path",settings.allowed_root); cJSON_AddItemToArray(entries,entry);
@@ -89,7 +90,10 @@ static cJSON *browse(const char *query,int *status) {
         if(S_ISREG(st.st_mode)) {
             size_t n=strlen(e->d_name); if(n>=5 && !strcasecmp(e->d_name+n-5,".mcap")) files++;
         }
-        if(!S_ISDIR(st.st_mode)) continue;
+        if(file_mode) {
+            size_t n=strlen(e->d_name);
+            if(!S_ISREG(st.st_mode) || n<5 || strcasecmp(e->d_name+n-5,".mcap")) continue;
+        } else if(!S_ISDIR(st.st_mode)) continue;
         if(count==MAX_FILES) { bad=1; break; }
         if(count==capacity) {
             size_t cap=capacity?capacity*2:64; char **more=realloc(names,cap*sizeof(*more));
@@ -109,6 +113,7 @@ static cJSON *browse(const char *query,int *status) {
         for(size_t i=offset;i<end;i++) {
             char full[PATH_MAX]; path_join(full,sizeof(full),path,names[i]);
             cJSON *entry=cJSON_CreateObject(); js(entry,"name",names[i]); js(entry,"path",full); cJSON_AddItemToArray(entries,entry);
+            if(file_mode && !lstat(full,&st)) json_number(entry,"size",(double)st.st_size);
         }
         if(end<count) json_number(out,"next_offset",(double)end); else cJSON_AddNullToObject(out,"next_offset");
     }
@@ -162,7 +167,8 @@ static void handle(connection *c) {
     if(!strcmp(method,"GET")) {
         if(!strcmp(target,"/health")) {
             out=cJSON_CreateObject(); js(out,"status","ok"); js(out,"version",SERVICE_VERSION); code=200;
-        } else if(!strcmp(target,"/directories")) out=browse(query,&code);
+        } else if(!strcmp(target,"/directories")) out=browse(query,&code,0);
+        else if(!strcmp(target,"/files")) out=browse(query,&code,1);
         else if(!strncmp(target,"/upload/",8)) out=task_get(c->server->manager,target+8,&code);
         else { code=404; out=error_json("Endpoint not found"); }
     } else if(!strcmp(method,"POST") && !strcmp(target,"/upload")) {
@@ -177,10 +183,11 @@ static void handle(connection *c) {
         buffer[need]=0;
         if(memchr(buffer+head_size,0,content_length) || strstr(buffer+head_size,"\\u0000")) goto malformed;
         cJSON *body=json_parse(buffer+head_size,content_length+1);
-        if(!cJSON_IsObject(body) || cJSON_GetArraySize(body)!=1 || !cJSON_IsString(cJSON_GetObjectItemCaseSensitive(body,"path"))) {
-            cJSON_Delete(body); out=error_json("JSON body must contain exactly one string field: path"); goto done;
+        cJSON *files=cJSON_GetObjectItemCaseSensitive(body,"files");
+        if(!cJSON_IsObject(body) || cJSON_GetArraySize(body)!=(files?2:1) || !cJSON_IsString(cJSON_GetObjectItemCaseSensitive(body,"path"))) {
+            cJSON_Delete(body); out=error_json("JSON body must contain path and optionally files"); goto done;
         }
-        out=task_submit(c->server->manager,str(body,"path"),&code); cJSON_Delete(body);
+        out=task_submit_files(c->server->manager,str(body,"path"),files,&code); cJSON_Delete(body);
     } else { code=404; out=error_json("Endpoint not found"); }
     goto done;
 malformed:

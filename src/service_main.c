@@ -24,7 +24,7 @@ static void cleanup_sessions(void) {
 }
 static void usage(const char *name) {
     printf("head-cam-upload %s\nUsage: %s [--host IPv4] [--port N] [--runtime-dir PATH] [--allowed-root PATH]\n"
-        "       %s --self-check\nDefault: 0.0.0.0:8000, runtime/ beside executable.\n"
+        "       %s --self-check\nDefault: 0.0.0.0:38127, runtime/ beside executable.\n"
         "HEAD_CAM_UPLOAD_TOKEN optionally requires Authorization: Bearer <token>.\n",SERVICE_VERSION,name,name);
 }
 int main(int argc,char **argv) {
@@ -33,7 +33,7 @@ int main(int argc,char **argv) {
        OpenSSL config/provider modules into the statically linked application. */
     if(!OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG,NULL)) return 1;
     const char *host="0.0.0.0",*runtime=NULL,*root=NULL,*config=NULL,*ossutil=NULL;
-    unsigned port=8000; int self_check=0;
+    unsigned port=38127; int self_check=0;
     settings.process_timeout=1800;
     for(int i=1;i<argc;i++) {
         if(!strcmp(argv[i],"--help") || !strcmp(argv[i],"-h")) { usage(argv[0]); return 0; }

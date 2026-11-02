@@ -1,8 +1,20 @@
 # 手机 App 对接：头环上传服务
 
-服务地址示例：`http://192.168.1.10:8000`。所有响应为 JSON。目录来自头环设备，App 应调用目录接口展示选择页面，不使用手机本地文件选择器。
+服务地址示例：`http://192.168.1.10:38127`。所有响应为 JSON。目录来自头环设备，App 应调用目录接口展示选择页面，不使用手机本地文件选择器。
 
-建议流程：检查服务 → 展示存储位置 → 点击进入目录 → “上传当前目录” → 查询任务进度。
+建议流程：检查服务 → 展示存储位置 → 进入目录并查询文件 → 勾选单个/多个文件或上传整个目录 → 查询任务进度。
+
+## 接口总览
+
+| 方法 | 路径 | 用途 |
+| --- | --- | --- |
+| GET | `/health` | 服务检查 |
+| GET | `/directories?path=...&offset=0` | 存储位置/子目录列表；初始首页省略 query |
+| GET | `/files?path=...&offset=0` | 当前层完整 MCAP 文件列表 |
+| POST | `/upload` | JSON path 为整目录；path + files 为指定单个/多个文件 |
+| GET | `/upload/{task_id}` | 任务状态和逐文件结果 |
+
+App 页面流程、请求速查、错误处理与验收见 [APP_INTEGRATION.md](APP_INTEGRATION.md)。
 
 ## 检查服务
 
@@ -70,9 +82,48 @@ HTTP 202：
 }
 ```
 
-请求必须且只能包含字符串 path，指向头环已有、可读的绝对目录。请求体最多 16 KiB。后台执行，无 YES 或其他终端交互。accepted 只表示接收成功。
+请求包含字符串 path，可选 files 数组（见下文），不接受其他字段。path 指向头环已有、可读的绝对目录。请求体最多 16 KiB。后台执行，无 YES 或其他终端交互。accepted 只表示接收成功。
 
-同目录未完成时重复提交返回 HTTP 200、duplicate=true 和原 task_id。父子目录重叠返回 409。任务结束后再次提交创建新任务，用于重试或追加数据。
+同目录且选择范围相同的未完成任务重复提交返回 HTTP 200、duplicate=true 和原 task_id。不同选择范围的同目录任务以及父子目录重叠返回 409。任务结束后再次提交创建新任务，用于重试或追加数据。
+
+## 单文件与多文件选择
+
+进入目录后，分别调用 `/directories?path=...` 获取子目录、`/files?path=...&offset=0` 获取当前层完整 MCAP 文件。文件列表每页最多 200 项，使用 next_offset 加载更多；不递归，不包含符号链接或 `.mcap.incomplete`。
+
+`GET /files?path=%2Fmnt%2Fsd%2Fsd0%2Frecordings` 返回 HTTP 200：
+
+```json
+{
+  "path":"/mnt/sd/sd0/recordings",
+  "parent":"/mnt/sd/sd0",
+  "selectable":true,
+  "mcap_files":2,
+  "files":[
+    {"name":"SSIEGO_Cam_A001_20261102_001.mcap","path":"/mnt/sd/sd0/recordings/SSIEGO_Cam_A001_20261102_001.mcap","size":1048576},
+    {"name":"SSIEGO_Cam_A001_20261102_002.mcap","path":"/mnt/sd/sd0/recordings/SSIEGO_Cam_A001_20261102_002.mcap","size":2097152}
+  ],
+  "total":2,
+  "next_offset":null
+}
+```
+
+App 在文件旁显示复选框，底部显示“上传所选文件（N）”。使用列表的 name 提交，不能提交完整文件路径。单选和多选使用同一接口：
+
+```http
+POST /upload
+Content-Type: application/json
+
+{"path":"/mnt/sd/sd0/recordings","files":["SSIEGO_Cam_A001_20261102_001.mcap","SSIEGO_Cam_A001_20261102_002.mcap"]}
+```
+
+- files 必须是 1–100 个不重复的文件名，且整个 JSON 不超过 16 KiB；超过时提示分批提交。
+- 只处理明确选中的文件，不扫描其他文件或子目录；不带 files 时仍为递归整目录上传。空数组或 null 返回 400，不会退化为整目录上传。
+- 文件必须直接位于 path 下、可读、为普通 `.mcap` 文件（后缀不区分大小写），不能含路径分隔符，不接受符号链接。任一文件提交校验失败，整次请求返回 400，不创建任务。
+- 文件名和内容的业务校验在后台执行，失败显示在逐文件结果中；列表出现不代表业务校验通过。
+- 选择顺序不影响重复任务识别；同一目录不同选择组合在已有任务未结束时返回 409，即使文件不重叠。
+- 任务查询新增 mode（files 或 directory）；文件任务包含 files 文件名数组。历史任务可能没有 mode，按 directory 处理。
+- 任务 ID、响应格式、轮询和逐文件结果规则保持一致。失败重试时保存并重新提交原 path 和 files，不能只提交 path，否则会上传整个目录。
+- 切换目录时清空勾选；分页追加时保留本目录勾选，按 name 去重。全选只能选择已加载的文件，应明确显示“全选已加载文件”。不支持跨目录混选。
 
 ## 查询任务
 

@@ -12,10 +12,10 @@
 cd /mnt/config/oss_upload
 chmod 700 head-cam-upload
 ./head-cam-upload --self-check
-./head-cam-upload --host 0.0.0.0 --port 8000
+./head-cam-upload --host 0.0.0.0 --port 38127
 ```
 
-执行二进制就启动 HTTP 服务，App 连接 `http://头环IP:8000`。开机自启动由设备环境按需配置，当前代码不修改设备启动项。`--self-check` 检查内嵌凭证初始化和 ossutil 启动，不访问 OSS，也不打印凭证。
+执行二进制就启动 HTTP 服务，App 连接 `http://头环IP:38127`。开机自启动由设备环境按需配置，当前代码不修改设备启动项。`--self-check` 检查内嵌凭证初始化和 ossutil 启动，不访问 OSS，也不打印凭证。
 
 默认运行目录为可执行文件旁的 `runtime/`，可通过 `--runtime-dir /可写路径/runtime` 指定（父目录必须存在）。运行目录需要可写且允许执行，用于释放内嵌依赖。设备还需可用的 `/proc` 和可写 `/tmp`。静态 ELF 的 Linux ABI 基线为 3.7，仍需在实际头环系统验证兼容性。
 
@@ -25,19 +25,22 @@ chmod 700 head-cam-upload
 
 ## App 接口
 
-详细请求、响应及目录选择流程见 [docs/API.md](docs/API.md)。
+App 开发接入流程、页面状态、轮询恢复和联调验收见 [docs/APP_INTEGRATION.md](docs/APP_INTEGRATION.md)。详细请求、响应及目录选择流程见 [docs/API.md](docs/API.md)。
 
 | 接口 | 用途 |
 | --- | --- |
 | `GET /health` | 服务就绪检查，不验证 OSS 连通性 |
 | `GET /directories` | TF 卡或允许根目录列表 |
 | `GET /directories?path=...&offset=0` | 浏览子目录，每页最多 200 项 |
+| `GET /files?path=...&offset=0` | 列出当前目录完整 MCAP 文件，每页最多 200 项 |
 | `POST /upload` | 提交 `{"path":"/mnt/sd/sd0/采集目录"}` |
 | `GET /upload/{task_id}` | 查询进度和逐文件结果 |
 
 App 点击目录进入下一层，点击“上传当前目录”时提交返回的 path，无需用户输入路径。路径属于头环，不是手机。仓库提供设备接口，App 页面需在 App 工程中接入。
 
 POST 立即返回任务 ID，后台逐个上传；`accepted=true` 不表示上传完成。提交 TF 卡根目录递归处理卡内数据，提交子目录只处理该目录。无终端输入或 YES 确认。
+
+目录内单选或多选文件：POST `/upload` 提交 `{"path":"/mnt/sd/sd0/采集目录","files":["文件1.mcap","文件2.mcap"]}`。只处理选中的当前层文件，不递归；files 限 1–100 个不重复名称，请求总大小仍最多 16 KiB。App 用 `/files` 展示文件并勾选，切换目录清空勾选。完整规则见 [docs/API.md](docs/API.md)。
 
 ## 文件和业务规则
 
@@ -75,7 +78,7 @@ POST 立即返回任务 ID，后台逐个上传；`accepted=true` 不表示上�
 
 ## 任务管理
 
-后台串行执行任务，HTTP 可并发。最多 100 个未完成任务；同目录重复提交返回原任务，父子目录重叠返回 409。终态任务重新提交创建新任务。
+后台串行执行任务，HTTP 可并发。最多 100 个未完成任务；同目录且选择范围相同的重复提交返回原任务，同目录不同选择及父子目录重叠返回 409。终态任务重新提交创建新任务。
 
 状态：`queued/scanning/uploading` 为处理中；`completed/partial_failed/failed/no_data/interrupted` 为终态。completed 可能包含空文件或内容未知的 skipped，应展示逐文件结果。
 
