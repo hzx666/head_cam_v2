@@ -1,5 +1,7 @@
 # 头环 MCAP 上传服务（C / ARM64 Linux）
 
+已新增统一服务：上传、监控独立进程，支持 systemd 开机自启及 OSS 版本更新。完整部署请使用整个 `dist/`，见 [统一服务部署](docs/UNIFIED_SERVICE.md)。下方单文件说明适用于单独运行上传组件。
+
 手机 App 浏览头环目录、选择目录后提交任务。C 服务递归扫描 MCAP，解析头环文件名，校验 SHA256，上传 OSS 并写入 metadata。接口和任务管理参考 teleop，头环命名及 metadata 参考 develop 的 head_cam。
 
 **没有附件处理，没有 MNS 通知，不自动修复或删除本地 MCAP。**
@@ -64,7 +66,7 @@ POST 立即返回任务 ID，后台逐个上传；`accepted=true` 不表示上�
 | 字段 | 取值 |
 | --- | --- |
 | ossPath / rootPrefix | 完整 OSS URI / original_data |
-| dataDomain / dataKind | ego_human_data / head_cam |
+| dataDomain / dataKind | ego_human_data / head_cam_v2 |
 | captureDate | YYYY-MM-DD |
 | deviceNo / deviceDir | 设备号 / `<设备号>_device` |
 | sessionName / relativePath | YYMMDD / `<YYMMDD>/<设备号>_device/<文件名>` |
@@ -81,6 +83,8 @@ POST 立即返回任务 ID，后台逐个上传；`accepted=true` 不表示上�
 后台串行执行任务，HTTP 可并发。最多 100 个未完成任务；同目录且选择范围相同的重复提交返回原任务，同目录不同选择及父子目录重叠返回 409。终态任务重新提交创建新任务。
 
 状态：`queued/scanning/uploading` 为处理中；`completed/partial_failed/failed/no_data/interrupted` 为终态。completed 可能包含空文件或内容未知的 skipped，应展示逐文件结果。
+
+任务查询提供整批及 current_file 的 progress_percent、bytes_total、bytes_uploaded 等字节进度字段，以及解析、传输、校验和 metadata 阶段。App 使用百分比字段更新进度条，处理时最多 99.9%，completed 才显示 100%。processed/total 仍为文件计数。字段语义及跳过/失败处理见 [docs/API.md](docs/API.md#实时字节进度新版)。
 
 `runtime/tasks/` 保存任务 JSON，`runtime/logs/` 保存日志。状态通过临时文件、fsync 和原子重命名落盘；保存失败后拒绝新任务。历史不自动清理。
 

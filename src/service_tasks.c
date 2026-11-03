@@ -91,6 +91,9 @@ cJSON *task_submit_files(task_manager *m,const char *raw,const cJSON *files,int 
         if(!selected) { *status=503; out=failure("Insufficient memory"); goto done; }
         selected->json=cJSON_CreateObject(); timestamp(now);
         js(selected->json,"task_id",id); js(selected->json,"path",path); js(selected->json,"status","queued");
+        js(selected->json,"phase","queued"); jb(selected->json,"bytes_total_known",0);
+        json_number(selected->json,"bytes_total",0); json_number(selected->json,"bytes_done",0);
+        json_number(selected->json,"bytes_uploaded",0); json_number(selected->json,"progress_percent",0);
         js(selected->json,"mode",normalized?"files":"directory");
         if(normalized) cJSON_AddItemToObject(selected->json,"files",cJSON_Duplicate(normalized,1));
         js(selected->json,"created_at",now); js(selected->json,"updated_at",now);
@@ -110,7 +113,7 @@ done:
     pthread_mutex_unlock(&m->mutex); return out;
 }
 
-typedef struct { char *path,*dest; char error[ERROR_SIZE]; int conflict; } plan;
+typedef struct { char *path,*dest; char error[ERROR_SIZE]; int conflict; uint64_t size; } plan;
 typedef struct { plan *items; size_t count,cap,ignored; } plans;
 static int ignored_dir(const char *name) {
     const char *names[]={".Spotlight-V100",".Trashes",".fseventsd","System Volume Information","$RECYCLE.BIN"};
@@ -165,10 +168,40 @@ static int by_path(const void *a,const void *b) { return strcmp(((const plan*)a)
 static int by_dest(const void *a,const void *b) {
     const plan *x=*(plan*const*)a,*y=*(plan*const*)b; return strcmp(x->dest?x->dest:"",y->dest?y->dest:"");
 }
+typedef struct {
+    task_manager *manager; task *current; const char *path;
+    uint64_t total, settled, transferred, current_bytes, size;
+} task_progress;
+/* Frequent progress stays in memory; file boundaries persist the snapshot.
+   This avoids rewriting an ever-growing task JSON on every network event. */
+static void update_progress(void *context,const char *phase,uint64_t bytes,uint64_t total) {
+    task_progress *p=context;
+    if(bytes>p->size) bytes=p->size;
+    p->current_bytes=bytes;
+    pthread_mutex_lock(&p->manager->mutex);
+    cJSON *j=p->current->json,*current=cJSON_GetObjectItemCaseSensitive(j,"current_file");
+    if(!current) { current=cJSON_CreateObject(); cJSON_AddItemToObject(j,"current_file",current); }
+    js(j,"phase",phase); js(current,"path",p->path); js(current,"file",strrchr(p->path,'/')+1);
+    js(current,"phase",phase); json_number(current,"bytes_total",(double)p->size);
+    json_number(current,"bytes_uploaded",(double)bytes);
+    double percent=p->size?100.0*(double)bytes/(double)p->size:0;
+    if(percent>=100) percent=99.9;
+    json_number(current,"progress_percent",percent);
+    uint64_t done=p->settled+bytes; if(done>p->total) done=p->total;
+    json_number(j,"bytes_total",(double)p->total); json_number(j,"bytes_done",(double)done);
+    json_number(j,"bytes_uploaded",(double)(p->transferred+bytes));
+    percent=p->total?100.0*(double)done/(double)p->total:0;
+    json_number(j,"progress_percent",percent>=100?99.9:percent);
+    char now[32]; timestamp(now); js(j,"updated_at",now);
+    pthread_mutex_unlock(&p->manager->mutex);
+    (void)total;
+}
 static void execute(task_manager *m,task *t) {
     char error[ERROR_SIZE]={0},root[PATH_MAX],now[32]; plans p={0};
+    task_progress progress={.manager=m,.current=t};
     pthread_mutex_lock(&m->mutex);
     snprintf(root,sizeof(root),"%s",str(t->json,"path")); js(t->json,"status","scanning"); timestamp(now); js(t->json,"started_at",now);
+    js(t->json,"phase","scanning");
     int rc=save(m,t); pthread_mutex_unlock(&m->mutex);
     if(rc) goto cleanup;
     const cJSON *files=cJSON_GetObjectItemCaseSensitive(t->json,"files");
@@ -192,6 +225,11 @@ static void execute(task_manager *m,task *t) {
         }
     }
     if(!rc && p.count) {
+        for(size_t i=0;i<p.count;i++) {
+            struct stat st;
+            if(!lstat(p.items[i].path,&st) && S_ISREG(st.st_mode) && st.st_size>0) p.items[i].size=(uint64_t)st.st_size;
+            progress.total+=p.items[i].size;
+        }
         qsort(p.items,p.count,sizeof(plan),by_path);
         plan **sorted=malloc(p.count*sizeof(*sorted));
         if(!sorted) { rc=-1; snprintf(error,sizeof(error),"Insufficient memory"); }
@@ -204,19 +242,35 @@ static void execute(task_manager *m,task *t) {
     }
     pthread_mutex_lock(&m->mutex);
     json_number(t->json,"total",(double)p.count); json_number(t->json,"ignored",(double)p.ignored);
+    json_number(t->json,"bytes_total",(double)progress.total);
+    jb(t->json,"bytes_total_known",!rc);
+    json_number(t->json,"bytes_done",0); json_number(t->json,"bytes_uploaded",0);
+    json_number(t->json,"progress_percent",0);
     js(t->json,"status",rc?"failed":p.count?"uploading":"no_data");
     if(rc) js(t->json,"error",error);
     int stored=save(m,t); pthread_mutex_unlock(&m->mutex);
     if(rc || stored || !p.count) goto finish;
     for(size_t i=0;i<p.count;i++) {
         plan *item=&p.items[i]; cJSON *result;
+        progress.path=item->path; progress.size=item->size; progress.current_bytes=0;
+        update_progress(&progress,"preparing",0,item->size);
         if(item->conflict) snprintf(item->error,sizeof(item->error),"Multiple local files map to the same OSS object; none uploaded");
         if(item->error[0]) {
             result=cJSON_CreateObject(); js(result,"path",item->path); js(result,"file",strrchr(item->path,'/')+1);
             js(result,"status","failed"); jb(result,"ok",0); js(result,"error",item->error);
-        } else { error[0]=0; result=process_file(item->path,item->dest,error); }
+        } else { error[0]=0; result=process_file_progress(item->path,item->dest,error,update_progress,&progress); }
         pthread_mutex_lock(&m->mutex);
         const char *status=str(result,"status");
+        progress.transferred+=progress.current_bytes;
+        if(!strcmp(status,"uploaded") || !strcmp(status,"skipped") || !strcmp(status,"empty")) progress.settled+=item->size;
+        else progress.settled+=progress.current_bytes;
+        json_number(t->json,"bytes_done",(double)progress.settled);
+        json_number(t->json,"bytes_uploaded",(double)progress.transferred);
+        cJSON *current=cJSON_GetObjectItemCaseSensitive(t->json,"current_file");
+        js(current,"phase",status);
+        if(strcmp(status,"failed")) json_number(current,"progress_percent",100);
+        double percent=progress.total?100.0*(double)progress.settled/(double)progress.total:0;
+        json_number(t->json,"progress_percent",percent>=100?99.9:percent);
         json_number(t->json,status,num(t->json,status)+1); json_number(t->json,"processed",num(t->json,"processed")+1);
         cJSON_AddItemToArray(cJSON_GetObjectItemCaseSensitive(t->json,"results"),result);
         rc=save(m,t); pthread_mutex_unlock(&m->mutex);
@@ -229,7 +283,10 @@ static void execute(task_manager *m,task *t) {
     }
     pthread_mutex_unlock(&m->mutex);
 finish:
-    pthread_mutex_lock(&m->mutex); timestamp(now); js(t->json,"finished_at",now); save(m,t); pthread_mutex_unlock(&m->mutex);
+    pthread_mutex_lock(&m->mutex);
+    js(t->json,"phase",str(t->json,"status"));
+    if(!strcmp(str(t->json,"status"),"completed")) json_number(t->json,"progress_percent",100);
+    timestamp(now); js(t->json,"finished_at",now); save(m,t); pthread_mutex_unlock(&m->mutex);
 cleanup:
     for(size_t i=0;i<p.count;i++) { free(p.items[i].path); free(p.items[i].dest); } free(p.items);
 }
@@ -263,6 +320,7 @@ int tasks_start(task_manager *m,char *error) {
         if(m->last) m->last->next=t; else m->first=t; m->last=t;
         if(active(str(j,"status"))) {
             char now[32]; timestamp(now); js(j,"status","interrupted"); js(j,"finished_at",now); js(j,"error","Service stopped before completion; resubmit path to retry");
+            js(j,"phase","interrupted");
             if(save(m,t)) { closedir(dir); goto bad; }
         }
     }

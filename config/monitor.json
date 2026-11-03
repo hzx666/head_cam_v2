@@ -1,0 +1,19 @@
+{
+  "enabled": false,
+  "device_id": "",
+  "device_type": "head_cam_v2",
+  "host": "mqtt.simplesilicon-data.com",
+  "port": 1883,
+  "tls": false,
+  "qos": 0,
+  "username": "",
+  "password": "",
+  "topic_prefix": "orin/prod",
+  "recording_root": "/mnt/sd/sd0",
+  "storage_path": "",
+  "battery_capacity_path": "",
+  "scan_interval_sec": 60,
+  "report_interval_sec": 120,
+  "warning_free_gb": 5,
+  "critical_free_gb": 2
+}

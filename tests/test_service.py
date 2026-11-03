@@ -175,7 +175,7 @@ class ServiceTests(unittest.TestCase):
         record = self.records()[0]
         meta = record['metadata']
         self.assertEqual(meta['x-oss-meta-dataDomain'], 'ego_human_data')
-        self.assertEqual(meta['x-oss-meta-dataKind'], 'head_cam')
+        self.assertEqual(meta['x-oss-meta-dataKind'], 'head_cam_v2')
         self.assertEqual(meta['x-oss-meta-deviceNo'], 'ABC123')
         self.assertEqual(meta['x-oss-meta-sessionName'], '261027')
         self.assertEqual(meta['x-oss-meta-duration'], '2.500')
@@ -320,6 +320,40 @@ class ServiceTests(unittest.TestCase):
         self.assertEqual(self.wait(task)['uploaded'], 2)
         self.stop(); self.start()
         self.assertEqual(self.request('GET', task['status_url'])[1]['files'], sorted([a.name, b.name]))
+
+    def test_live_byte_progress_and_finalization(self):
+        a = self.file()
+        b = self.file('SSIEGO_Cam_ABC123_20261027_002.mcap')
+        self.rules(progress=True, progress_noise=True)
+        task = self.submit()
+        seen = []
+        for _ in range(200):
+            _, result = self.request('GET', task['status_url'])
+            seen.append(result)
+            if result['status'] not in ('queued', 'scanning', 'uploading'):
+                break
+            time.sleep(.03)
+        self.assertEqual(result['status'], 'completed', result)
+        self.assertTrue(any(0 < r.get('current_file', {}).get('bytes_uploaded', 0) < a.stat().st_size for r in seen))
+        self.assertTrue(any(0 < r.get('progress_percent', 0) < 99 for r in seen))
+        self.assertTrue(all(r.get('progress_percent', 0) < 100 for r in seen if r['status'] in ('queued', 'scanning', 'uploading')))
+        self.assertEqual(result['bytes_total'], a.stat().st_size + b.stat().st_size)
+        self.assertEqual(result['bytes_uploaded'], result['bytes_total'])
+        self.assertEqual(result['bytes_done'], result['bytes_total'])
+        self.assertEqual(result['progress_percent'], 100)
+        skipped = self.wait(self.submit())
+        self.assertEqual(skipped['bytes_uploaded'], 0)
+        self.assertEqual(skipped['bytes_done'], skipped['bytes_total'])
+        self.assertEqual(skipped['progress_percent'], 100)
+
+    def test_failed_byte_transfer_does_not_report_complete(self):
+        self.file()
+        self.rules(progress=True, fail_after_progress=True)
+        result = self.wait(self.submit())
+        self.assertEqual(result['status'], 'failed')
+        self.assertLess(result['progress_percent'], 100)
+        self.assertGreater(result['bytes_uploaded'], 0)
+        self.assertEqual(result['phase'], 'failed')
 
     def test_crc_errors_and_malformed_http(self):
         content = bytearray(mcap('zstd'))

@@ -34,6 +34,7 @@ int main(int argc,char **argv) {
     if(!OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG,NULL)) return 1;
     const char *host="0.0.0.0",*runtime=NULL,*root=NULL,*config=NULL,*ossutil=NULL;
     unsigned port=38127; int self_check=0;
+    const char *update_list=NULL,*update_get=NULL,*update_output=NULL;
     settings.process_timeout=1800;
     for(int i=1;i<argc;i++) {
         if(!strcmp(argv[i],"--help") || !strcmp(argv[i],"-h")) { usage(argv[0]); return 0; }
@@ -41,6 +42,9 @@ int main(int argc,char **argv) {
         if(i+1>=argc) { usage(argv[0]); return 64; }
         const char *option=argv[i],*value=argv[++i];
         if(!strcmp(option,"--host")) host=value;
+        else if(!strcmp(option,"--update-list")) update_list=value;
+        else if(!strcmp(option,"--update-get")) update_get=value;
+        else if(!strcmp(option,"--update-output")) update_output=value;
         else if(!strcmp(option,"--runtime-dir")) runtime=value;
         else if(!strcmp(option,"--allowed-root")) root=value;
         else if(!strcmp(option,"--port")) {
@@ -59,7 +63,9 @@ int main(int argc,char **argv) {
     ssize_t len=readlink("/proc/self/exe",exe,sizeof(exe)-1);
     if(len<0 || len>=(ssize_t)sizeof(exe)-1) { fprintf(stderr,"Cannot locate executable\n"); return 1; }
     exe[len]=0; char *slash=strrchr(exe,'/'); if(!slash) return 1; *slash=0;
-    if(self_check) {
+    int updating=update_list || update_get;
+    if(updating) settings.process_timeout=120;
+    if(self_check || updating) {
         snprintf(path,sizeof(path),"/tmp/head-cam-selfcheck-XXXXXX");
         if(!mkdtemp(path)) return 1;
     } else if(runtime) {
@@ -77,6 +83,26 @@ int main(int argc,char **argv) {
     cleanup_sessions();
     int rc=1;
     if(bundle_open(config,ossutil,error)) goto done;
+    if(updating) {
+        const char *uri=update_list?update_list:update_get;
+        const char *prefix="oss://ss-oss-data-platform/tools/device_monitor/head_cam_v2/";
+        if(strncmp(uri,prefix,strlen(prefix)) || (update_get && (!update_output || update_output[0]!='/'))) {
+            snprintf(error,sizeof(error),"Invalid update source or output"); goto done;
+        }
+        const char *list_args[]={"ls",uri,NULL};
+        const char *get_args[]={"cp",uri,update_output,"-f",NULL};
+        char *output=NULL;
+        rc=oss_run(update_list?list_args:get_args,&output,error);
+        /* 仅输出匹配发布前缀的对象 URI，绝不透传 CLI 诊断或认证信息。 */
+        if(!rc && update_list && output) {
+            char *p=output;
+            while((p=strstr(p,prefix))) {
+                size_t n=strcspn(p," \t\r\n");
+                printf("%.*s\n",(int)n,p); p+=n;
+            }
+        }
+        free(output); goto done;
+    }
     if(oss_self_check(error)) goto done;
     if(self_check) { printf("PASS: C service, embedded credentials, ossutil; no OSS requests made.\n"); rc=0; goto done; }
     if(chdir(settings.runtime)) { snprintf(error,sizeof(error),"Cannot enter runtime directory"); goto done; }
@@ -93,6 +119,6 @@ int main(int argc,char **argv) {
 done:
     if(error[0]) fprintf(stderr,"%s\n",error);
     bundle_close(); close(lock);
-    if(self_check) { unlink(lock_path); rmdir(settings.runtime); }
+    if(self_check || updating) { unlink(lock_path); rmdir(settings.runtime); }
     return rc?1:0;
 }

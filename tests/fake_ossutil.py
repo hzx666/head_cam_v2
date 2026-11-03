@@ -38,6 +38,21 @@ if command == 'stat':
         print(name + ' : ' + value)
 elif command == 'cp':
     content = Path(args[0]).read_bytes()
+    if rules.get('progress'):
+        # Match the pinned ossutil v1.7.19 output, including CR frames,
+        # thousands separators, reads split mid-field and a full log buffer.
+        if rules.get('progress_noise'):
+            sys.stdout.write('untrusted diagnostic ignored\n' * 6000)
+        for step in range(1, 5):
+            count = len(content) * step // 4
+            frame = f'\rTotal num: 1, size: {len(content):,}. Dealed num: 0, OK size: {count:,}, Progress: {step*25:.3f}%, Speed: 10.00KB/s\r'
+            split = frame.index('OK size:') + 5
+            sys.stdout.write(frame[:split]); sys.stdout.flush()
+            time.sleep(.04)
+            sys.stdout.write(frame[split:]); sys.stdout.flush()
+            time.sleep(.22)
+        if rules.get('fail_after_progress'):
+            sys.exit(1)
     headers = dict(pair.split(':', 1) for pair in args[args.index('--meta') + 1].split('#'))
     record.write_text(json.dumps(dict(destination=destination, etag=hashlib.md5(content).hexdigest(), metadata=headers,
                                      actual_sha256=hashlib.sha256(content).hexdigest(), uploads=1)))

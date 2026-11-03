@@ -2,6 +2,8 @@
 
 服务地址示例：`http://192.168.1.10:38127`。所有响应为 JSON。目录来自头环设备，App 应调用目录接口展示选择页面，不使用手机本地文件选择器。
 
+设备写入 OSS 的元数据头 `x-oss-meta-dataKind` 值为 `head_cam_v2`；App 无需提交此字段。
+
 建议流程：检查服务 → 展示存储位置 → 进入目录并查询文件 → 勾选单个/多个文件或上传整个目录 → 查询任务进度。
 
 ## 接口总览
@@ -164,7 +166,51 @@ Content-Type: application/json
 
 建议每 1–2 秒查询一次；保存 task_id 可恢复查询。queued/scanning/uploading 时继续查询；completed/partial_failed/failed/no_data/interrupted 是终态。
 
-扫描结束后 total 才确定。processed/total 是文件处理进度，不是上传字节百分比。单文件状态为 uploaded/skipped/empty/failed；失败时读取 error。空文件及前置失败可能不包含校验字段。
+扫描结束后 total 才确定。processed/total 是文件处理数量；百分比进度使用下文新增的 progress_percent 字段。单文件状态为 uploaded/skipped/empty/failed；失败时读取 error。空文件及前置失败可能不包含校验字段。
+
+### 实时字节进度（新版）
+
+仍轮询同一个 `GET /upload/{task_id}`，无需增加接口。任务返回新增字段，示意如下（其余原字段省略）：
+
+```json
+{
+  "status":"uploading",
+  "phase":"transferring",
+  "bytes_total_known":true,
+  "bytes_total":200000000,
+  "bytes_done":125000000,
+  "bytes_uploaded":125000000,
+  "progress_percent":62.5,
+  "current_file":{
+    "path":"/mnt/sd/sd0/recordings/SSIEGO_Cam_A001_20261102_002.mcap",
+    "file":"SSIEGO_Cam_A001_20261102_002.mcap",
+    "phase":"transferring",
+    "bytes_total":100000000,
+    "bytes_uploaded":25000000,
+    "progress_percent":25
+  }
+}
+```
+
+| 字段 | 含义 |
+| --- | --- |
+| bytes_total_known | queued/scanning 时 false；扫描成功后 true。false 时显示不定进度，不把 0 当成空任务 |
+| bytes_total | 扫描时统计的本任务文件总字节数，包含之后可能跳过或失败的文件 |
+| bytes_done | 整批按字节推进的工作量：已处理成功/跳过文件大小，加当前及失败文件已报告的传输字节；并非全部成功上传的字节 |
+| bytes_uploaded | OSS 工具报告的传输/断点恢复有效字节累计，不含直接跳过的文件，不等于网络流量或服务器最终确认字节数 |
+| progress_percent | 整批进度条百分比，0–100。处理中最多 99.9，completed 才为 100 |
+| current_file | 当前文件信息；未开始文件处理时可以缺省，终态保留最后文件 |
+| current_file.bytes_total | 当前文件在扫描时统计的字节数 |
+| current_file.bytes_uploaded | 当前文件上传工具报告的有效字节数，直接跳过时为 0 |
+| current_file.progress_percent | 当前文件百分比；传输/校验阶段最多 99.9，文件处理成功或跳过后为 100 |
+
+phase 及 current_file.phase 的处理中取值：preparing（解析 MCAP、计算校验）、checking_remote（检查云端对象）、transferring（传输中）、verifying（上传后校验）、metadata（写入元信息）。任务 queued/scanning 和终态时 phase 使用对应任务状态；current_file.phase 在文件结束时使用 uploaded/skipped/empty/failed。
+
+App 展示两条进度：整批使用顶层 progress_percent，当前文件使用 current_file.progress_percent；不要再用 processed/total 计算百分比。仍以 status 判断是否结束，不能凭字节数或百分比判成功。整数百分比用向下取整，避免将 99.9 四舍五入成 100。失败任务即使部分字节已传出也不会强制显示 100。
+
+进度来自固定版本 ossutil 的实际 OK size 输出，工具通常约每 5 秒刷新一次，App 可继续每 1–2 秒轮询；小文件可能在一次刷新前结束，不保证逐个百分比都能观察到。重试可能使有效字节回退，断点恢复可能使进度跳跃；解析校验和 metadata 阶段不增长传输字节，应展示阶段文案。跳过文件会按文件大小推进整批工作量，但 bytes_uploaded 不增加。无文件或全部空文件时按 status 展示结果，避免除零。
+
+进度事件只更新内存快照，文件边界持久化，避免频繁写设备闪存。服务重启以 interrupted 为准，历史字节快照不能当作可续传承诺。旧任务/旧服务可缺省这些字段，App 回退为文件数量加不定进度。
 
 历史对象没有 SHA256 时，结果为 skipped、checksum_status=unknown、same_content=null，不能显示为“校验一致”。completed 也可能包含这些跳过项或空文件，App 应展示明细。
 

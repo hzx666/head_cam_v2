@@ -4,6 +4,8 @@
 
 更新时间：2026-11-02。当前支持整目录、同目录单文件及多文件上传。
 
+设备写入 OSS 的元数据头 `x-oss-meta-dataKind` 值为 `head_cam_v2`，由服务自动设置，App 无需传入。
+
 ## 接口总览（共 5 个）
 
 所有路径均相对于 `http://设备IP:38127`；启用令牌后全部接口携带 `Authorization: Bearer <令牌>`。
@@ -225,7 +227,7 @@ HTTP 200 示例：
 | `no_data` | 未发现可处理的 MCAP 文件 | 是 |
 | `interrupted` | 任务已中断，可重新提交 | 是 |
 
-不要只凭 `processed==total` 判断结束；以 status 是否为终态为准。扫描时 total 尚未确定，显示不定进度；处理时 total 大于 0 才显示 `processed / total`。这是文件处理数量进度，没有字节进度、实时速度或剩余时间接口。
+不要只凭 `processed==total` 判断结束；以 status 是否为终态为准。扫描时 total 尚未确定，显示不定进度；处理时 total 大于 0 才显示 `processed / total`。processed/total 仅为文件数量；新版字节进度使用 progress_percent 和 current_file.progress_percent，详见第 12 节。尚无实时速度或剩余时间字段。
 
 | 统计字段 | 含义 |
 | --- | --- |
@@ -324,7 +326,7 @@ curl 'http://192.168.1.10:38127/upload/<task_id>'
 - App 退出重进可恢复查询；断网重连不会直接判任务失败；服务重启后显示 interrupted。
 - 至少完成一次真实 MCAP 上传，核对 OSS 文件与 metadata；仅 health 成功不算上传链路验收完成。
 
-当前无附件、MNS 通知、预览、质检事件、WebSocket、取消/暂停、字节进度或任务列表接口。上传后设备本地数据保留；未完成的 `.mcap.incomplete` 文件不自动修复或上传。文件命名与业务规则见 [README.md](../README.md)。
+当前无附件、MNS 通知、预览、质检事件、WebSocket、取消/暂停或任务列表接口。上传后设备本地数据保留；未完成的 `.mcap.incomplete` 文件不自动修复或上传。文件命名与业务规则见 [README.md](../README.md)。
 
 ## 11. 新增：目录内单文件和多文件上传
 
@@ -345,3 +347,40 @@ curl 'http://192.168.1.10:38127/upload/<task_id>'
 本地保存设备、task_id、path、files、mode。重试文件任务必须带原 files，遗漏会变成整目录上传。新增验收：单选、多选、未选、分页保留选择、切目录清空、空/null/重复/越界文件拒绝、仅处理所选文件、与整目录任务冲突、重启后恢复结果。
 
 具体接口样例见 [API.md 的单文件与多文件选择](API.md#单文件与多文件选择)。
+
+## 12. 单文件与整批字节进度
+
+新版仍使用 `GET /upload/{task_id}` 轮询，无新增接口。App 必须将进度条的数据源从 processed/total 改为返回的 progress_percent；文件计数可作为辅助文字。
+
+```json
+{
+  "status":"uploading",
+  "phase":"transferring",
+  "bytes_total_known":true,
+  "bytes_total":200000000,
+  "bytes_done":125000000,
+  "bytes_uploaded":125000000,
+  "progress_percent":62.5,
+  "current_file":{
+    "path":"/mnt/sd/sd0/recordings/SSIEGO_Cam_A001_20261102_002.mcap",
+    "file":"SSIEGO_Cam_A001_20261102_002.mcap",
+    "phase":"transferring",
+    "bytes_total":100000000,
+    "bytes_uploaded":25000000,
+    "progress_percent":25
+  }
+}
+```
+
+以上为示意片段，实际还包含 task_id、文件计数和 results 等原字段。
+
+- 整批进度条：顶层 progress_percent；当前文件进度条：current_file.progress_percent。整数文字向下取整，不把 99.9 四舍五入成 100。
+- bytes_total_known=false 时尚在排队/扫描，显示不定进度；为 true 后 bytes_total 是扫描得到的文件总大小。
+- bytes_uploaded 是工具报告的有效上传/续传字节，bytes_done 还包含跳过文件对应的已处理工作量；不要把 bytes_done 标注为“成功上传字节”。这些值不代表重试消耗的网络流量。
+- phase=preparing：正在解析文件并计算校验；checking_remote：检查云端；transferring：正在传输；verifying：正在校验；metadata：正在写入元信息。
+- 处理中 progress_percent 最高 99.9；单文件传输结束后仍需校验和 metadata，任务 completed 才展示整批 100% 和最终结果。失败/中断即使已有传输字节，也以 status 显示失败/中断。
+- 小文件可能在一次轮询间隔内完成，进度可跳变；重试或断点恢复可能使字节回退或跳跃，不要在客户端伪造平滑递增的进度。校验阶段字节不增长时展示阶段文字。
+- 工具通常约每 5 秒报告一次字节进度，App 仍可每 1–2 秒轮询；两次查询值相同不代表任务卡住。
+- 服务重启后以 interrupted 为准，实时进度仅在文件处理边界持久化。旧任务没有这些字段时，回退到计数和不定进度。
+
+完整字段语义见 [API.md](API.md#实时字节进度新版)。App 验收需覆盖单个大文件的中间百分比、多文件整批进度、跳过、失败、校验阶段，以及 completed 之前不显示 100%。

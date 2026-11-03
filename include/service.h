@@ -45,7 +45,12 @@ void bundle_close(void);
 int oss_self_check(char *error);
 /* Never exposes raw ossutil output (which may contain request credentials). */
 int oss_run(const char *const *args, char **output, char *error);
+typedef void (*upload_progress_fn)(void *context, const char *phase, uint64_t bytes, uint64_t total);
+int oss_run_progress(const char *const *args, char **output, char *error,
+                     upload_progress_fn progress, void *context, uint64_t total);
 cJSON *process_file(const char *path, const char *destination, char *error);
+cJSON *process_file_progress(const char *path, const char *destination, char *error,
+                            upload_progress_fn progress, void *context);
 int destination_for(const char *name, char *out, size_t cap, char *error);
 
 typedef struct task {

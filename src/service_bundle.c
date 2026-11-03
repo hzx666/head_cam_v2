@@ -106,6 +106,23 @@ void bundle_close(void) {
 }
 static double monotonic(void) { struct timespec ts; clock_gettime(CLOCK_MONOTONIC,&ts); return (double)ts.tv_sec+(double)ts.tv_nsec/1e9; }
 int oss_run(const char *const *args,char **output,char *error) {
+    return oss_run_progress(args,output,error,NULL,NULL,0);
+}
+/* ossutil 1.7.19 emits exact, comma-grouped byte counts as "OK size: N".
+   Keep a separate bounded frame buffer: output may exceed the diagnostic cap,
+   split anywhere across reads, or refresh with CR rather than newline. */
+static void progress_frame(const char *line,upload_progress_fn cb,void *context,uint64_t total) {
+    if(!cb || (strncmp(line,"Total num:",10) && strncmp(line,"Scanned num:",12))) return;
+    const char *p=strstr(line,", OK size: "); if(!p) return; p+=11;
+    uint64_t value=0; int digits=0;
+    while((*p>='0' && *p<='9') || *p==',') {
+        if(*p!=',') { unsigned digit=(unsigned)(*p-'0'); if(value>(UINT64_MAX-digit)/10) return; value=value*10+digit; digits++; }
+        p++;
+    }
+    if(digits && value<=total && (*p==',' || *p==' ' || !*p)) cb(context,"transferring",value,total);
+}
+int oss_run_progress(const char *const *args,char **output,char *error,
+                     upload_progress_fn progress,void *context,uint64_t total) {
     char *argv[80]; int argc=0;
     argv[argc++]=settings.ossutil; argv[argc++]="-c"; argv[argc++]=settings.config;
     for(size_t i=0;args[i];i++) { if(argc>=70) return -1; argv[argc++]=(char*)args[i]; }
@@ -130,17 +147,32 @@ int oss_run(const char *const *args,char **output,char *error) {
     const size_t cap=128*1024; char *buf=malloc(cap+1); size_t used=0;
     if(!buf) { kill(-pid,SIGKILL); waitpid(pid,NULL,0); close(pipefd[0]); goto failed; }
     double deadline=monotonic()+(double)settings.process_timeout; int status=0,finished=0,eof=0,timed_out=0;
+    char frame[2048]; size_t frame_used=0; int overflow=0;
     while(!finished || !eof) {
         struct pollfd pollfd={.fd=pipefd[0],.events=POLLIN}; poll(&pollfd,1,100);
         char temp[8192]; ssize_t n;
         while((n=read(pipefd[0],temp,sizeof(temp)))>0) {
+            if(progress) for(ssize_t i=0;i<n;i++) {
+                if(temp[i]=='\r' || temp[i]=='\n') {
+                    frame[frame_used]=0; if(!overflow) progress_frame(frame,progress,context,total);
+                    frame_used=0; overflow=0;
+                } else if(frame_used+1<sizeof(frame)) frame[frame_used++]=temp[i];
+                else overflow=1;
+            }
             size_t take=(size_t)n; if(take>cap-used) take=cap-used;
             memcpy(buf+used,temp,take); used+=take;
+            /* The last refresh has no trailing CR until the next refresh.
+               Parse once its following field is present instead of lagging
+               one complete ossutil reporting interval behind. */
+            frame[frame_used]=0;
+            if(progress && !overflow && (strstr(frame,", Progress:") || strstr(frame,", Speed:")))
+                progress_frame(frame,progress,context,total);
         }
         if(!n || (n<0 && errno!=EAGAIN && errno!=EINTR)) eof=1;
         if(!finished) { pid_t w=waitpid(pid,&status,WNOHANG); if(w==pid) finished=1; }
         if(monotonic()>deadline) { timed_out=1; kill(-pid,SIGKILL); if(!finished) while(waitpid(pid,&status,0)<0 && errno==EINTR) {} break; }
     }
+    frame[frame_used]=0; if(progress && !overflow) progress_frame(frame,progress,context,total);
     close(pipefd[0]); buf[used]=0;
     if(output) *output=buf; else free(buf);
     if(timed_out) { snprintf(error,ERROR_SIZE,"OSS operation timed out"); return -1; }
