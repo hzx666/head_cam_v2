@@ -87,9 +87,6 @@ static int metadata(const char *dest,const char *name,const head_identity *id,
 done:
     cJSON_Delete(j); return rc;
 }
-cJSON *process_file(const char *path,const char *destination,char *error) {
-    return process_file_progress(path,destination,error,NULL,NULL);
-}
 cJSON *process_file_progress(const char *path,const char *destination,char *error,
                             upload_progress_fn progress,void *context) {
     const char *name=strrchr(path,'/'); name=name?name+1:path;

@@ -1,23 +1,23 @@
 # 头环 MCAP 上传服务（C / ARM64 Linux）
 
-已新增统一服务：上传、监控独立进程，支持 systemd 开机自启及 OSS 版本更新。完整部署请使用整个 `dist/`，见 [统一服务部署](docs/UNIFIED_SERVICE.md)。下方单文件说明适用于单独运行上传组件。
+服务使用单二进制 head-cam-service，上传、监控由守护进程独立管理。设备部署与开机自启见 [BUSYBOX_DEPLOY.md](BUSYBOX_DEPLOY.md)，监控协议见 [统一服务说明](docs/UNIFIED_SERVICE.md)。
 
 手机 App 浏览头环目录、选择目录后提交任务。C 服务递归扫描 MCAP，解析头环文件名，校验 SHA256，上传 OSS 并写入 metadata。接口和任务管理参考 teleop，头环命名及 metadata 参考 develop 的 head_cam。
 
 **没有附件处理，没有 MNS 通知，不自动修复或删除本地 MCAP。**
 
-## 单文件部署
+## 单独启动上传组件
 
-运行产物是 `dist/head-cam-upload`，一个 ARM64 Linux 静态可执行文件，内嵌 ossutil、CA 证书与加密凭证。设备无需 Python、额外 ossutil 或明文 AK/SK 配置。`SHA256SUMS`、`build-info.txt` 是校验和构建说明，不是运行依赖。
+运行产物是 `dist/head-cam-service`，一个 ARM64 Linux 静态可执行文件，内嵌 ossutil、CA 证书与加密凭证。设备无需 Python、额外 ossutil 或明文 AK/SK 配置。`SHA256SUMS`、`build-info.txt` 是校验和构建说明，不是运行依赖。
 
 ```sh
 cd /mnt/config/oss_upload
-chmod 700 head-cam-upload
-./head-cam-upload --self-check
-./head-cam-upload --host 0.0.0.0 --port 38127
+chmod 700 head-cam-service
+./head-cam-service upload --self-check
+./head-cam-service upload --host 0.0.0.0 --port 38127
 ```
 
-执行二进制就启动 HTTP 服务，App 连接 `http://头环IP:38127`。开机自启动由设备环境按需配置，当前代码不修改设备启动项。`--self-check` 检查内嵌凭证初始化和 ossutil 启动，不访问 OSS，也不打印凭证。
+使用 upload 子命令启动 HTTP 服务，App 连接 `http://头环IP:38127`。开机自启动按部署文档安装。`--self-check` 检查内嵌凭证初始化和 ossutil 启动，不访问 OSS，也不打印凭证。
 
 默认运行目录为可执行文件旁的 `runtime/`，可通过 `--runtime-dir /可写路径/runtime` 指定（父目录必须存在）。运行目录需要可写且允许执行，用于释放内嵌依赖。设备还需可用的 `/proc` 和可写 `/tmp`。静态 ELF 的 Linux ABI 基线为 3.7，仍需在实际头环系统验证兼容性。
 

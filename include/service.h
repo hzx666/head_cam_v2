@@ -18,7 +18,6 @@ typedef struct {
     char runtime[PATH_MAX], allowed_root[PATH_MAX], bundle_dir[PATH_MAX];
     char ossutil[PATH_MAX], config[PATH_MAX], bucket[128], ca[PATH_MAX];
     unsigned process_timeout;
-    int offline;
 } service_config;
 
 extern service_config settings;
@@ -48,7 +47,6 @@ int oss_run(const char *const *args, char **output, char *error);
 typedef void (*upload_progress_fn)(void *context, const char *phase, uint64_t bytes, uint64_t total);
 int oss_run_progress(const char *const *args, char **output, char *error,
                      upload_progress_fn progress, void *context, uint64_t total);
-cJSON *process_file(const char *path, const char *destination, char *error);
 cJSON *process_file_progress(const char *path, const char *destination, char *error,
                             upload_progress_fn progress, void *context);
 int destination_for(const char *name, char *out, size_t cap, char *error);
@@ -66,7 +64,6 @@ typedef struct {
 } task_manager;
 int tasks_start(task_manager *manager, char *error);
 void tasks_close(task_manager *manager);
-cJSON *task_submit(task_manager *manager, const char *path, int *http_status);
 cJSON *task_submit_files(task_manager *manager, const char *path, const cJSON *files, int *http_status);
 cJSON *task_get(task_manager *manager, const char *id, int *http_status);
 int http_serve(task_manager *manager, const char *host, unsigned port, const char *token);

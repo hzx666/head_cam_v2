@@ -30,31 +30,29 @@ fi
 python3 "$ROOT/scripts/embed_bundle.py" "${CREDS[@]}" --ossutil "$OSSUTIL" \
     --ca "${CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}" --out "$WORK/bundle" --arch "$ARCH"
 cmake -S "$ROOT" -B "$WORK/build" "${CMAKE_TARGET[@]}" -DCMAKE_BUILD_TYPE=Release \
-    -DSERVICE_STATIC=ON -DSERVICE_TESTING=OFF -DBUNDLE_DIR="$WORK/bundle"
+    -DBUSYBOX_BIN="${BUSYBOX_BIN:-$ROOT/.deps/arm64/bin/busybox}" -DSERVICE_STATIC=ON -DSERVICE_TESTING=OFF -DBUNDLE_DIR="$WORK/bundle"
 cmake --build "$WORK/build" -j "${BUILD_JOBS:-4}"
-"$STRIP" "$WORK/build/head-cam-upload"
-if readelf -l "$WORK/build/head-cam-upload" | grep -q INTERP; then
+"$STRIP" "$WORK/build/head-cam-service"
+if readelf -l "$WORK/build/head-cam-service" | grep -q INTERP; then
     echo 'Refusing non-static release.' >&2; exit 1
 fi
 # Running a cross-built self-check requires ARM binfmt support for its child helper.
 if [[ $(uname -m) == aarch64 && $ARCH == arm64 || $(uname -m) == x86_64 && $ARCH == x86_64 ]]; then
-    "$WORK/build/head-cam-upload" --self-check
+    "$WORK/build/head-cam-service" --self-check
 elif [[ -n ${QEMU_SELF_CHECK:-} ]]; then
-    qemu-aarch64 "$WORK/build/head-cam-upload" --self-check
+    qemu-aarch64 "$WORK/build/head-cam-service" --self-check
 fi
 mkdir -p "$ROOT/dist"
-install -m 700 "$WORK/build/head-cam-upload" "$ROOT/dist/head-cam-upload"
-for component in head-cam-monitor head-cam-service; do
-    "$STRIP" "$WORK/build/$component"
-    if readelf -l "$WORK/build/$component" | grep -q INTERP; then echo 'Refusing non-static component' >&2;exit 1;fi
-    install -m 700 "$WORK/build/$component" "$ROOT/dist/$component"
-done
+install -m 700 "$WORK/build/head-cam-service" "$ROOT/dist/head-cam-service"
+# 清理旧交付组件，避免误用旧进程入口。
+rm -f "$ROOT/dist/head-cam-upload" "$ROOT/dist/head-cam-monitor" "$ROOT/dist/busybox"
 install -m 700 "$ROOT/scripts/boot_autostart.sh" "$ROOT/scripts/service_entry.sh" "$ROOT/scripts/run-upload" "$ROOT/scripts/run-monitor" "$ROOT/dist/"
-install -m 600 "$ROOT/config/monitor.json" "$ROOT/dist/monitor.example.json"
+install -m 700 "$ROOT/scripts/manual_dhcp.sh" "$ROOT/dist/manual_dhcp.sh"
+install -m 600 "$ROOT/config/monitor.json" "$ROOT/dist/monitor.json"
 install -m 600 "$ROOT/SERVICE_VERSION" "$ROOT/dist/SERVICE_VERSION"
 (
     cd "$ROOT/dist"
-    sha256sum head-cam-upload head-cam-monitor head-cam-service service_entry.sh run-upload run-monitor boot_autostart.sh monitor.example.json SERVICE_VERSION > SHA256SUMS
+    sha256sum head-cam-service service_entry.sh run-upload run-monitor boot_autostart.sh manual_dhcp.sh monitor.json SERVICE_VERSION > SHA256SUMS
     {
         echo "Target: Linux $ARCH; static C11 executable"
         echo "Built: $(date -u +%Y-%m-%dT%H:%M:%SZ)"

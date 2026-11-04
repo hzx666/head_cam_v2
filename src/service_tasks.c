@@ -34,9 +34,6 @@ cJSON *task_get(task_manager *m,const char *id,int *status) {
     pthread_mutex_unlock(&m->mutex);
     *status=out?200:404; return out?out:failure("Task not found");
 }
-cJSON *task_submit(task_manager *m,const char *raw,int *status) {
-    return task_submit_files(m,raw,NULL,status);
-}
 cJSON *task_submit_files(task_manager *m,const char *raw,const cJSON *files,int *status) {
     char path[PATH_MAX]; struct stat st;
     *status=400;

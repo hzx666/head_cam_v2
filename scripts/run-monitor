@@ -1,3 +1,3 @@
-#!/usr/bin/env bash
-set -euo pipefail
-exec "$(dirname -- "$0")/service_entry.sh" monitor
+#!/bin/sh
+set -eu
+exec "${0%/*}/service_entry.sh" monitor

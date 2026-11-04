@@ -53,7 +53,7 @@ int main(int argc,char **argv) {
             port=(unsigned)parsed;
         }
 #ifdef SERVICE_TESTING
-        else if(!strcmp(option,"--test-config")) { config=value; settings.offline=1; }
+        else if(!strcmp(option,"--test-config")) { config=value; }
         else if(!strcmp(option,"--test-ossutil")) ossutil=value;
         else if(!strcmp(option,"--test-timeout")) settings.process_timeout=(unsigned)strtoul(value,NULL,10);
 #endif

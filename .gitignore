@@ -6,3 +6,4 @@
 *.pyc
 /credentials*.json
 /oss_upload.conf
+/artifacts/oss-release/

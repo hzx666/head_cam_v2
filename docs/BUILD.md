@@ -1,6 +1,6 @@
 # 构建与验证
 
-当前构建同时生成上传、监控、守护程序和启动更新脚本，部署整个 `dist/`。统一服务安装及更新说明见 [UNIFIED_SERVICE.md](UNIFIED_SERVICE.md)。下方原有单文件说明仅针对上传组件。
+当前构建生成统一二进制 head-cam-service 及启动更新脚本，部署整个 dist/。设备部署见 [BUSYBOX_DEPLOY.md](../BUSYBOX_DEPLOY.md)。
 
 设备端全部业务使用 C11；Python 仅用于构建生成内嵌资源和离线测试，不部署到头环。
 
@@ -33,7 +33,8 @@ CREDENTIALS_SOURCE=/mnt/d/real-device-upload-teleop/upload_core.py \
 
 输出：
 
-- `dist/head-cam-upload`：唯一需要部署的运行文件。
+- `dist/head-cam-service`：内嵌上传、监控、守护和 BusyBox 的统一二进制。
+- 启动脚本、monitor.json 和 SERVICE_VERSION：随整个 dist/ 部署。
 - `dist/SHA256SUMS`：成品完整性校验。
 - `dist/build-info.txt`：架构、编译器、依赖包与内嵌资源校验值。
 
@@ -49,7 +50,7 @@ CREDENTIALS_SOURCE=/mnt/d/real-device-upload-teleop/upload_core.py \
 cmake -S . -B build-service-native -DSERVICE_TESTING=ON -DCMAKE_BUILD_TYPE=Debug
 cmake --build build-service-native -j4
 python3 tests/test_service.py build-service-native/head-cam-upload
-python3 tests/smoke_release.py dist/head-cam-upload --qemu
+python3 tests/smoke_release.py dist/head-cam-service --qemu
 ```
 
 集成测试使用模拟 ossutil，覆盖目录浏览、身份解析、Zstd/LZ4、CRC、metadata、SHA256、冲突、失败、鉴权、持久化和重启，不访问真实 OSS。成品 smoke test 只提交空目录。

@@ -18,7 +18,7 @@ OPTS=(-o APT::Architecture=arm64 -o APT::Architectures::=arm64
       -o APT::Get::List-Cleanup=0 -o Acquire::Languages=none)
 apt-get "${OPTS[@]}" update -qq
 cd "$WORK"
-apt-get "${OPTS[@]}" download libssl-dev:arm64 liblz4-dev:arm64 libzstd-dev:arm64
+apt-get "${OPTS[@]}" download busybox-static:arm64 libssl-dev:arm64 liblz4-dev:arm64 libzstd-dev:arm64
 for package in ./*.deb; do dpkg-deb -x "$package" "$DEST"; done
 sha256sum ./*.deb > "$DEST/package-sha256.txt"
 printf 'Prepared ARM64 static libraries in %s\n' "$DEST"

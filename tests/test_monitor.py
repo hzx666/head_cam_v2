@@ -10,6 +10,7 @@ import unittest
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 
 
+
 def packet(sock):
     def read(n):
         data = b''
@@ -99,7 +100,9 @@ class MonitorTest(unittest.TestCase):
 
     def test_unconfigured_stays_alive(self):
         with tempfile.TemporaryDirectory() as tmp:
-            process = subprocess.Popen([str(ROOT / 'build-service-native/head-cam-monitor'), str(ROOT / 'config/monitor.json'), tmp])
+            config_path = pathlib.Path(tmp)/'disabled.json'
+            config_path.write_text('{"enabled":false}')
+            process = subprocess.Popen([str(ROOT / 'build-service-native/head-cam-monitor'), str(config_path), tmp])
             try:
                 time.sleep(0.5)
                 self.assertIsNone(process.poll())

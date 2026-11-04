@@ -1,6 +1,6 @@
 {
-  "enabled": false,
-  "device_id": "",
+  "enabled": true,
+  "device_id": "8L6AR120012",
   "device_type": "head_cam_v2",
   "host": "mqtt.simplesilicon-data.com",
   "port": 1883,
@@ -15,5 +15,6 @@
   "scan_interval_sec": 60,
   "report_interval_sec": 120,
   "warning_free_gb": 5,
-  "critical_free_gb": 2
+  "critical_free_gb": 2,
+  "notes": "沿用 X5 MQTT 地址、主题及报文格式，设备类型 head_cam_v2。默认扫描 /mnt/sd/sd0 及子目录，实际路径不同只改 recording_root。storage_path 留空使用 recording_root。设备编号和电池接口待补齐，之后 enabled=true。"
 }
