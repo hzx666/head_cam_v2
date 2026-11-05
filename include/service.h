@@ -35,6 +35,8 @@ const char *str(const cJSON *obj, const char *key);
 double num(const cJSON *obj, const char *key);
 void timestamp(char out[32]);
 int sha256_fd(int fd, char out[65]);
+double epoch_ms(void);
+void file_identity(const char *path, const struct stat *st, char out[67]);
 int same_file(const struct stat *a, const struct stat *b);
 int head_parse(const char *name, head_identity *identity, char *error);
 int mcap_duration(int fd, double *duration, char *error);
@@ -44,10 +46,10 @@ void bundle_close(void);
 int oss_self_check(char *error);
 /* Never exposes raw ossutil output (which may contain request credentials). */
 int oss_run(const char *const *args, char **output, char *error);
-typedef void (*upload_progress_fn)(void *context, const char *phase, uint64_t bytes, uint64_t total);
+typedef void (*upload_progress_fn)(void *context, const char *phase, uint64_t bytes, uint64_t total, double speed);
 int oss_run_progress(const char *const *args, char **output, char *error,
                      upload_progress_fn progress, void *context, uint64_t total);
-cJSON *process_file_progress(const char *path, const char *destination, char *error,
+cJSON *process_file_progress(const char *path, const char *destination, int delete_after_upload, char *error,
                             upload_progress_fn progress, void *context);
 int destination_for(const char *name, char *out, size_t cap, char *error);
 
@@ -64,7 +66,7 @@ typedef struct {
 } task_manager;
 int tasks_start(task_manager *manager, char *error);
 void tasks_close(task_manager *manager);
-cJSON *task_submit_files(task_manager *manager, const char *path, const cJSON *files, int *http_status);
+cJSON *task_submit_files(task_manager *manager, const char *path, const cJSON *files, int delete_after_upload, int *http_status);
 cJSON *task_get(task_manager *manager, const char *id, int *http_status);
 int http_serve(task_manager *manager, const char *host, unsigned port, const char *token);
 #endif

@@ -154,6 +154,97 @@ class ServiceTests(unittest.TestCase):
     def rules(self, **values):
         (self.oss / 'control.json').write_text(json.dumps(values))
 
+    def test_file_list_upload_history(self):
+        file = self.file('SSI_IRIS2_EGO_All_0003_20261105_104254_906_01.mcap')
+
+        def listing(state):
+            code, data = self.request('GET', '/files?' + urlencode(dict(path=str(self.data), upload_state=state)))
+            self.assertEqual(code, 200)
+            return data
+
+        before = listing('NOT_UPLOADED')
+        self.assertEqual(before['total_bytes'], file.stat().st_size)
+        original = before['files'][0]
+        self.assertEqual(original['recordedAt'], 1793846574906)
+        self.assertEqual(original['uploadState'], 'NOT_UPLOADED')
+        self.assertEqual(listing('UPLOADED')['total'], 0)
+        result = self.wait(self.submit())
+        self.assertEqual(result['uploaded'], 1, result)
+        first = listing('UPLOADED')['files'][0]
+        self.assertEqual(first['fileId'], original['fileId'])
+        self.assertEqual(first['progressPercent'], 100)
+        self.assertEqual(first['sha256'], first['remoteSha256'])
+        self.assertTrue(first['canUpload'])
+        self.assertEqual(self.wait(self.submit())['skipped'], 1)
+        self.stop()
+        self.start()
+        self.assertEqual(listing('UPLOADED')['files'][0]['uploadedAt'], first['uploadedAt'])
+        file.write_bytes(mcap(delta=3_000_000_000))
+        self.assertEqual(listing('UPLOADED')['total'], 0)
+        self.assertNotEqual(listing('NOT_UPLOADED')['files'][0]['fileId'], original['fileId'])
+
+    def test_delete_after_upload(self):
+        file = self.file()
+        for value in ('true', 1, None, [], {}):
+            code, _ = self.request('POST', '/upload', dict(path=str(self.data), delete_after_upload=value))
+            self.assertEqual(code, 400)
+        retained = self.wait(self.submit())
+        self.assertFalse(retained['delete_after_upload'])
+        self.assertFalse(retained['results'][0]['local_deleted'])
+        self.assertTrue(file.exists())
+        for existing in (True, False):
+            if not existing:
+                file = self.file('SSIEGO_Cam_NEW_20261027_001.mcap')
+            code, task = self.request('POST', '/upload', dict(path=str(self.data),
+                files=[file.name], delete_after_upload=True))
+            self.assertEqual(code, 202)
+            self.assertTrue(task['delete_after_upload'])
+            result = self.wait(task)
+            self.assertEqual(result['status'], 'completed', result)
+            self.assertEqual(result['results'][0]['status'], 'skipped' if existing else 'uploaded')
+            self.assertTrue(result['results'][0]['local_deleted'])
+            self.assertFalse(file.exists())
+        self.stop()
+        self.start()
+        self.assertTrue(self.request('GET', task['status_url'])[1]['results'][0]['local_deleted'])
+
+    def test_delete_retains_unverified_files(self):
+        file = self.file()
+        self.wait(self.submit())
+        record_path = next(self.oss.glob('*.json'))
+        record = json.loads(record_path.read_text())
+        record['metadata'].pop('x-oss-meta-sha256')
+        record_path.write_text(json.dumps(record))
+        empty = self.file('SSIEGO_Cam_EMPTY_20261027_001.mcap', b'')
+        bad = self.file('SSIEGO_Cam_BAD_20261027_001.mcap', b'invalid')
+        _, task = self.request('POST', '/upload', dict(path=str(self.data), delete_after_upload=True))
+        result = self.wait(task)
+        self.assertEqual(result['status'], 'partial_failed')
+        self.assertTrue(all(p.exists() for p in (file, empty, bad)))
+        self.assertTrue(all(not r['local_deleted'] for r in result['results']))
+
+    def test_delete_metadata_failure_and_retry(self):
+        file = self.file()
+        self.rules(fail=['set-meta'])
+        _, task = self.request('POST', '/upload', dict(path=str(self.data), delete_after_upload=True))
+        result = self.wait(task)
+        self.assertEqual(result['status'], 'failed')
+        self.assertTrue(file.exists())
+        self.assertFalse(result['results'][0]['local_deleted'])
+        self.rules()
+        _, task = self.request('POST', '/upload', dict(path=str(self.data), delete_after_upload=True))
+        self.assertTrue(self.wait(task)['results'][0]['local_deleted'])
+        self.assertFalse(file.exists())
+
+    def test_delete_option_conflicts_with_active_task(self):
+        self.file()
+        self.rules(delay=.2)
+        task = self.submit()
+        code, _ = self.request('POST', '/upload', dict(path=str(self.data), delete_after_upload=True))
+        self.assertEqual(code, 409)
+        self.assertEqual(self.submit()['task_id'], task['task_id'])
+        self.wait(task)
+
     def test_browse_select_upload_metadata_and_skip(self):
         child = self.data / '采集 one'
         child.mkdir()
@@ -337,11 +428,20 @@ class ServiceTests(unittest.TestCase):
         self.assertTrue(any(0 < r.get('current_file', {}).get('bytes_uploaded', 0) < a.stat().st_size for r in seen))
         self.assertTrue(any(0 < r.get('progress_percent', 0) < 99 for r in seen))
         self.assertTrue(all(r.get('progress_percent', 0) < 100 for r in seen if r['status'] in ('queued', 'scanning', 'uploading')))
+        self.assertTrue(any(r.get('speed_bytes_per_second') == 10240 for r in seen))
+        self.assertTrue(any(r.get('current_file', {}).get('speed_bytes_per_second') == 10240 for r in seen))
+        self.assertEqual(result['speed_bytes_per_second'], 0)
+        self.assertEqual(result['current_file']['speed_bytes_per_second'], 0)
+        log = (self.runtime / 'logs' / 'service.log').read_text()
+        self.assertIn('speed=10.00 KiB/s speed_bytes_per_second=10240.00', log)
+        self.log.flush()
+        self.assertIn('speed=10.00 KiB/s', (self.root / 'service.log').read_text())
         self.assertEqual(result['bytes_total'], a.stat().st_size + b.stat().st_size)
         self.assertEqual(result['bytes_uploaded'], result['bytes_total'])
         self.assertEqual(result['bytes_done'], result['bytes_total'])
         self.assertEqual(result['progress_percent'], 100)
         skipped = self.wait(self.submit())
+        self.assertEqual(skipped['speed_bytes_per_second'], 0)
         self.assertEqual(skipped['bytes_uploaded'], 0)
         self.assertEqual(skipped['bytes_done'], skipped['bytes_total'])
         self.assertEqual(skipped['progress_percent'], 100)
@@ -354,6 +454,8 @@ class ServiceTests(unittest.TestCase):
         self.assertLess(result['progress_percent'], 100)
         self.assertGreater(result['bytes_uploaded'], 0)
         self.assertEqual(result['phase'], 'failed')
+        self.assertEqual(result['speed_bytes_per_second'], 0)
+        self.assertEqual(result['current_file']['speed_bytes_per_second'], 0)
 
     def test_crc_errors_and_malformed_http(self):
         content = bytearray(mcap('zstd'))

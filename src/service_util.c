@@ -2,6 +2,7 @@
 #include <errno.h>
 #include <fcntl.h>
 #include <openssl/evp.h>
+#include <openssl/sha.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -110,6 +111,22 @@ int sha256_fd(int fd, char out[65]) {
     if (!ok) return -1;
     for (unsigned i=0;i<32;i++) snprintf(out+2*i, 3, "%02x", digest[i]);
     return 0;
+}
+double epoch_ms(void) {
+    struct timespec now;
+    clock_gettime(CLOCK_REALTIME,&now);
+    return (double)now.tv_sec*1000+now.tv_nsec/1000000;
+}
+void file_identity(const char *path,const struct stat *st,char out[67]) {
+    char key[PATH_MAX+256];
+    snprintf(key,sizeof(key),"%s\n%ju:%ju:%jd:%jd:%ld:%jd:%ld",path,
+        (uintmax_t)st->st_dev,(uintmax_t)st->st_ino,(intmax_t)st->st_size,
+        (intmax_t)st->st_mtim.tv_sec,st->st_mtim.tv_nsec,
+        (intmax_t)st->st_ctim.tv_sec,st->st_ctim.tv_nsec);
+    unsigned char digest[32];
+    SHA256((const unsigned char*)key,strlen(key),digest);
+    memcpy(out,"f_",2);
+    for(size_t i=0;i<32;i++) snprintf(out+2+i*2,3,"%02x",digest[i]);
 }
 int same_file(const struct stat *a, const struct stat *b) {
     return a->st_dev == b->st_dev && a->st_ino == b->st_ino && a->st_size == b->st_size &&

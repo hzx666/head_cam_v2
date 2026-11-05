@@ -15,6 +15,7 @@
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <time.h>
 
 static volatile sig_atomic_t stopping;
 static void stop_signal(int sig) { (void)sig; stopping=1; }
@@ -45,7 +46,99 @@ static int decode(const char *in,char *out,size_t cap) {
     out[used]=0; return 0;
 }
 static int sort_names(const void *a,const void *b) { return strcmp(*(char*const*)a,*(char*const*)b); }
-static cJSON *browse(const char *query,int *status,int file_mode) {
+typedef struct {
+    cJSON *result,*live;
+    char task_id[33],live_id[33];
+    double uploaded_at;
+} listed_history;
+
+static void copy_field(cJSON *entry,const char *key,const cJSON *source,const char *field) {
+    const cJSON *value=cJSON_GetObjectItemCaseSensitive(source,field);
+    cJSON_AddItemToObject(entry,key,value?cJSON_Duplicate(value,1):cJSON_CreateNull());
+}
+static void nullable_text(cJSON *entry,const char *key,const char *value) {
+    if(*value) js(entry,key,value); else cJSON_AddNullToObject(entry,key);
+}
+static double recorded_ms(const char *name,const head_identity *id) {
+    char date[16];
+    snprintf(date,sizeof(date),"%.4s%.2s%.2s_",id->date,id->date+5,id->date+8);
+    const char *part=strstr(name,date);
+    if(!part) return 0;
+    part+=strlen(date);
+    if(strspn(part,"0123456789")!=6 || part[6]!='_' || strspn(part+7,"0123456789")!=3 ||
+       (part[10]!='_' && part[10]!='.')) return 0;
+    struct tm tm={0};
+    if(!strptime(id->date,"%Y-%m-%d",&tm) || !strptime(part,"%H%M%S",&tm) || tm.tm_sec>=60) return 0;
+    return ((double)timegm(&tm)-8*3600)*1000+atoi(part+7);
+}
+static void history_snapshot(task_manager *manager,const char *path,char **names,size_t count,listed_history *history) {
+    pthread_mutex_lock(&manager->mutex);
+    for(task *t=manager->first;t;t=t->next) {
+        if(!path_inside(path,str(t->json,"path"))) continue;
+        const cJSON *item,*results=cJSON_GetObjectItemCaseSensitive(t->json,"results");
+        const char *task_id=str(t->json,"task_id");
+        cJSON_ArrayForEach(item,results) {
+            const char *full=str(item,"path"),*slash=strrchr(full,'/');
+            if(!slash || (slash==full ? strcmp(path,"/") : (strlen(path)!=(size_t)(slash-full) || strncmp(full,path,(size_t)(slash-full))))) continue;
+            const char *name=slash+1;
+            char **slot=bsearch(&name,names,count,sizeof(*names),sort_names);
+            if(!slot || !*str(item,"fileId")) continue;
+            listed_history *h=&history[slot-names];
+            if(strcmp(str(h->result,"fileId"),str(item,"fileId"))) h->uploaded_at=0;
+            if(num(item,"uploadedAt")>0) h->uploaded_at=num(item,"uploadedAt");
+            cJSON_Delete(h->result); h->result=cJSON_Duplicate(item,1);
+            snprintf(h->task_id,sizeof(h->task_id),"%s",task_id);
+        }
+        if(strcmp(str(t->json,"status"),"uploading")) continue;
+        const cJSON *current=cJSON_GetObjectItemCaseSensitive(t->json,"current_file");
+        const char *full=str(current,"path"),*slash=strrchr(full,'/');
+        if(!slash || (slash==full ? strcmp(path,"/") : (strlen(path)!=(size_t)(slash-full) || strncmp(full,path,(size_t)(slash-full))))) continue;
+        const char *name=slash+1,*phase=str(current,"phase");
+        char **slot=bsearch(&name,names,count,sizeof(*names),sort_names);
+        if(!slot || !*str(current,"fileId") || !strcmp(phase,"uploaded") || !strcmp(phase,"skipped") ||
+           !strcmp(phase,"failed") || !strcmp(phase,"empty")) continue;
+        listed_history *h=&history[slot-names];
+        cJSON_Delete(h->live); h->live=cJSON_Duplicate(current,1);
+        snprintf(h->live_id,sizeof(h->live_id),"%s",task_id);
+    }
+    pthread_mutex_unlock(&manager->mutex);
+}
+static cJSON *listed_file(const char *name,const char *full,const struct stat *st,
+                          const char *filter,const listed_history *h) {
+    char id[67]; file_identity(full,st,id);
+    const cJSON *result=!strcmp(id,str(h->result,"fileId"))?h->result:NULL;
+    const cJSON *live=!strcmp(id,str(h->live,"fileId"))?h->live:NULL;
+    int uploaded=cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(result,"upload_verified"));
+    if(*filter && uploaded!=(!strcmp(filter,"UPLOADED"))) return NULL;
+    cJSON *entry=cJSON_CreateObject();
+    js(entry,"fileId",id); js(entry,"name",name); js(entry,"path",full);
+    json_number(entry,"size",(double)st->st_size);
+    json_number(entry,"modifiedAt",(double)st->st_mtim.tv_sec*1000+st->st_mtim.tv_nsec/1000000);
+    head_identity identity; char error[ERROR_SIZE];
+    int valid=!head_parse(name,&identity,error);
+    double recorded=valid?recorded_ms(name,&identity):0;
+    if(recorded) json_number(entry,"recordedAt",recorded); else cJSON_AddNullToObject(entry,"recordedAt");
+    js(entry,"sealState","SEALED");
+    const char *failure=str(result,"error");
+    js(entry,"uploadState",uploaded?"UPLOADED":live?"UPLOADING":*failure?"FAILED":"NOT_UPLOADED");
+    json_number(entry,"uploadedBytes",uploaded?(double)st->st_size:num(live,"bytes_uploaded"));
+    json_number(entry,"progressPercent",uploaded?100:num(live,"progress_percent"));
+    nullable_text(entry,"taskId",live?h->live_id:result?h->task_id:"");
+    copy_field(entry,"sha256",result,"sha256"); copy_field(entry,"remoteSha256",result,"remote_sha256");
+    copy_field(entry,"updatedAt",result,"updatedAt");
+    if(uploaded && h->uploaded_at>0) json_number(entry,"uploadedAt",h->uploaded_at); else cJSON_AddNullToObject(entry,"uploadedAt");
+    if(cJSON_IsNumber(cJSON_GetObjectItemCaseSensitive(result,"duration")))
+        json_number(entry,"durationMs",num(result,"duration")*1000);
+    else cJSON_AddNullToObject(entry,"durationMs");
+    const char *uri=str(result,"ossPath"),*key=!strncmp(uri,"oss://",6)?strchr(uri+6,'/'):NULL;
+    nullable_text(entry,"objectKey",key?key+1:"");
+    nullable_text(entry,"errorCode",*failure?"UPLOAD_FAILED":""); nullable_text(entry,"errorMessage",failure);
+    const char *blocked=live?"UPLOAD_IN_PROGRESS":!valid?"INVALID_FILENAME":!st->st_size?"EMPTY_FILE":"";
+    jb(entry,"canUpload",!*blocked); nullable_text(entry,"blockedReason",blocked);
+    return entry;
+}
+static cJSON *browse(task_manager *manager,const char *query,int *status,int file_mode) {
+    const char *filter="";
     char raw[PATH_MAX]={0}; unsigned long offset=0; int path_seen=0,offset_seen=0;
     if(query && *query) {
         char *copy=strdup(query),*state=NULL;
@@ -55,7 +148,9 @@ static cJSON *browse(const char *query,int *status,int file_mode) {
             } else if(!strncmp(part,"offset=",7) && !offset_seen++) {
                 char *end=NULL; errno=0; offset=strtoul(part+7,&end,10);
                 if(errno || !part[7] || *end || offset>MAX_FILES) { free(copy); *status=400; return error_json("Invalid offset"); }
-            } else { free(copy); *status=400; return error_json("Only path and offset query parameters are supported"); }
+             } else if(file_mode && !*filter && !strcmp(part,"upload_state=UPLOADED")) filter="UPLOADED";
+            else if(file_mode && !*filter && !strcmp(part,"upload_state=NOT_UPLOADED")) filter="NOT_UPLOADED";
+            else { free(copy); *status=400; return error_json("Invalid or duplicate query parameter"); }
         }
         free(copy);
     }
@@ -109,6 +204,32 @@ static cJSON *browse(const char *query,int *status,int file_mode) {
         if(slash==parent) parent[1]=0; else if(slash) *slash=0;
         if(!strcmp(path,"/") || (settings.allowed_root[0] && !strcmp(path,settings.allowed_root))) cJSON_AddNullToObject(out,"parent");
         else js(out,"parent",parent);
+        if(file_mode) {
+            listed_history *history=count?calloc(count,sizeof(*history)):NULL;
+            if(count && !history) { bad=1; goto cleanup; }
+            if(count) history_snapshot(manager,path,names,count,history);
+            size_t matched=0; double total_bytes=0;
+            for(size_t i=0;i<count;i++) {
+                char full[PATH_MAX];
+                if(path_join(full,sizeof(full),path,names[i]) || lstat(full,&st) || !S_ISREG(st.st_mode)) continue;
+                cJSON *entry=listed_file(names[i],full,&st,filter,&history[i]);
+                if(!entry) continue;
+                total_bytes+=(double)st.st_size;
+                if(matched>=offset && matched<offset+200) cJSON_AddItemToArray(entries,entry);
+                else cJSON_Delete(entry);
+                matched++;
+            }
+            for(size_t i=0;i<count;i++) { cJSON_Delete(history[i].result); cJSON_Delete(history[i].live); }
+            free(history);
+            json_number(out,"total",(double)matched); json_number(out,"total_bytes",total_bytes);
+            json_number(out,"snapshot_at",epoch_ms());
+            if(offset+200<matched) json_number(out,"next_offset",(double)(offset+200));
+            else cJSON_AddNullToObject(out,"next_offset");
+            const char *config=getenv("HEAD_CAM_MONITOR_CONFIG");
+            cJSON *monitor=config && *config?json_load(config):NULL;
+            nullable_text(out,"device_sn",str(monitor,"device_id")); cJSON_Delete(monitor);
+            goto cleanup;
+        }
         size_t end=offset+200; if(end>count) end=count;
         for(size_t i=offset;i<end;i++) {
             char full[PATH_MAX]; path_join(full,sizeof(full),path,names[i]);
@@ -117,6 +238,7 @@ static cJSON *browse(const char *query,int *status,int file_mode) {
         }
         if(end<count) json_number(out,"next_offset",(double)end); else cJSON_AddNullToObject(out,"next_offset");
     }
+cleanup:
     for(size_t i=0;i<count;i++) free(names[i]);
     free(names);
     if(bad) { *status=500; goto invalid; }
@@ -167,8 +289,8 @@ static void handle(connection *c) {
     if(!strcmp(method,"GET")) {
         if(!strcmp(target,"/health")) {
             out=cJSON_CreateObject(); js(out,"status","ok"); js(out,"version",SERVICE_VERSION); code=200;
-        } else if(!strcmp(target,"/directories")) out=browse(query,&code,0);
-        else if(!strcmp(target,"/files")) out=browse(query,&code,1);
+        } else if(!strcmp(target,"/directories")) out=browse(c->server->manager,query,&code,0);
+        else if(!strcmp(target,"/files")) out=browse(c->server->manager,query,&code,1);
         else if(!strncmp(target,"/upload/",8)) out=task_get(c->server->manager,target+8,&code);
         else { code=404; out=error_json("Endpoint not found"); }
     } else if(!strcmp(method,"POST") && !strcmp(target,"/upload")) {
@@ -184,10 +306,11 @@ static void handle(connection *c) {
         if(memchr(buffer+head_size,0,content_length) || strstr(buffer+head_size,"\\u0000")) goto malformed;
         cJSON *body=json_parse(buffer+head_size,content_length+1);
         cJSON *files=cJSON_GetObjectItemCaseSensitive(body,"files");
-        if(!cJSON_IsObject(body) || cJSON_GetArraySize(body)!=(files?2:1) || !cJSON_IsString(cJSON_GetObjectItemCaseSensitive(body,"path"))) {
-            cJSON_Delete(body); out=error_json("JSON body must contain path and optionally files"); goto done;
+        cJSON *remove_local=cJSON_GetObjectItemCaseSensitive(body,"delete_after_upload");
+        if((remove_local && !cJSON_IsBool(remove_local)) || !cJSON_IsObject(body) || cJSON_GetArraySize(body)!=(1+(files?1:0)+(remove_local?1:0)) || !cJSON_IsString(cJSON_GetObjectItemCaseSensitive(body,"path"))) {
+            cJSON_Delete(body); out=error_json("JSON body must contain path and optionally files and boolean delete_after_upload"); goto done;
         }
-        out=task_submit_files(c->server->manager,str(body,"path"),files,&code); cJSON_Delete(body);
+        out=task_submit_files(c->server->manager,str(body,"path"),files,cJSON_IsTrue(remove_local),&code); cJSON_Delete(body);
     } else { code=404; out=error_json("Endpoint not found"); }
     goto done;
 malformed:

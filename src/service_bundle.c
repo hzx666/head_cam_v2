@@ -1,4 +1,5 @@
 #include "service.h"
+#include <math.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <openssl/crypto.h>
@@ -120,7 +121,22 @@ static void progress_frame(const char *line,upload_progress_fn cb,void *context,
         if(*p!=',') { unsigned digit=(unsigned)(*p-'0'); if(value>(UINT64_MAX-digit)/10) return; value=value*10+digit; digits++; }
         p++;
     }
-    if(digits && value<=total && (*p==',' || *p==' ' || !*p)) cb(context,"transferring",value,total);
+    double speed=0;
+    const char *rate=strstr(line,", Speed:");
+    if(rate) {
+        char *end; double amount=strtod(rate+8,&end);
+        while(*end==' ') end++;
+        const char *units[]={"B/s","KB/s","MB/s","GB/s","TB/s"};
+        double scale=1;
+        for(size_t i=0;i<5;i++,scale*=1024) {
+            size_t n=strlen(units[i]);
+            if(!strncmp(end,units[i],n) && (!end[n] || end[n]==' ' || end[n]==',')) {
+                if(isfinite(amount) && amount>=0 && isfinite(amount*scale)) speed=amount*scale;
+                break;
+            }
+        }
+    }
+    if(digits && value<=total && (*p==',' || *p==' ' || !*p)) cb(context,"transferring",value,total,speed);
 }
 int oss_run_progress(const char *const *args,char **output,char *error,
                      upload_progress_fn progress,void *context,uint64_t total) {

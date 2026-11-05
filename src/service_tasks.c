@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <time.h>
 
 static int active(const char *s) { return !strcmp(s,"queued") || !strcmp(s,"scanning") || !strcmp(s,"uploading"); }
 static int id_valid(const char *s) { return strlen(s)==32 && strspn(s,"0123456789abcdef")==32; }
@@ -34,7 +35,7 @@ cJSON *task_get(task_manager *m,const char *id,int *status) {
     pthread_mutex_unlock(&m->mutex);
     *status=out?200:404; return out?out:failure("Task not found");
 }
-cJSON *task_submit_files(task_manager *m,const char *raw,const cJSON *files,int *status) {
+cJSON *task_submit_files(task_manager *m,const char *raw,const cJSON *files,int delete_after_upload,int *status) {
     char path[PATH_MAX]; struct stat st;
     *status=400;
     if(!raw || raw[0]!='/' || strlen(raw)>=PATH_MAX || !realpath(raw,path)) return failure("path must be an existing absolute device directory");
@@ -74,7 +75,8 @@ cJSON *task_submit_files(task_manager *m,const char *raw,const cJSON *files,int 
         const char *previous=str(t->json,"path");
         if(!strcmp(path,previous)) {
             const cJSON *old=cJSON_GetObjectItemCaseSensitive(t->json,"files");
-            if((!old && !normalized) || (old && normalized && cJSON_Compare(old,normalized,1))) { selected=t; duplicate=1; break; }
+            if(cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(t->json,"delete_after_upload"))==delete_after_upload &&
+               ((!old && !normalized) || (old && normalized && cJSON_Compare(old,normalized,1)))) { selected=t; duplicate=1; break; }
             *status=409; out=failure("Directory overlaps an active upload task"); goto done;
         }
         if(path_inside(path,previous) || path_inside(previous,path)) { *status=409; out=failure("Directory overlaps an active upload task"); goto done; }
@@ -90,7 +92,9 @@ cJSON *task_submit_files(task_manager *m,const char *raw,const cJSON *files,int 
         js(selected->json,"task_id",id); js(selected->json,"path",path); js(selected->json,"status","queued");
         js(selected->json,"phase","queued"); jb(selected->json,"bytes_total_known",0);
         json_number(selected->json,"bytes_total",0); json_number(selected->json,"bytes_done",0);
+        json_number(selected->json,"speed_bytes_per_second",0);
         json_number(selected->json,"bytes_uploaded",0); json_number(selected->json,"progress_percent",0);
+        jb(selected->json,"delete_after_upload",delete_after_upload);
         js(selected->json,"mode",normalized?"files":"directory");
         if(normalized) cJSON_AddItemToObject(selected->json,"files",cJSON_Duplicate(normalized,1));
         js(selected->json,"created_at",now); js(selected->json,"updated_at",now);
@@ -101,7 +105,7 @@ cJSON *task_submit_files(task_manager *m,const char *raw,const cJSON *files,int 
         if(m->last) m->last->next=selected; else m->first=selected;
         m->last=selected; pthread_cond_signal(&m->changed);
     }
-    out=cJSON_CreateObject(); jb(out,"accepted",1); jb(out,"duplicate",duplicate);
+    out=cJSON_CreateObject(); jb(out,"delete_after_upload",delete_after_upload); jb(out,"accepted",1); jb(out,"duplicate",duplicate);
     js(out,"task_id",str(selected->json,"task_id")); js(out,"status",str(selected->json,"status"));
     char url[64]; snprintf(url,sizeof(url),"/upload/%s",str(selected->json,"task_id")); js(out,"status_url",url);
     *status=duplicate?200:202;
@@ -168,17 +172,26 @@ static int by_dest(const void *a,const void *b) {
 typedef struct {
     task_manager *manager; task *current; const char *path;
     uint64_t total, settled, transferred, current_bytes, size;
+    double last_log;
 } task_progress;
 /* Frequent progress stays in memory; file boundaries persist the snapshot.
    This avoids rewriting an ever-growing task JSON on every network event. */
-static void update_progress(void *context,const char *phase,uint64_t bytes,uint64_t total) {
+static void update_progress(void *context,const char *phase,uint64_t bytes,uint64_t total,double speed) {
     task_progress *p=context;
     if(bytes>p->size) bytes=p->size;
     p->current_bytes=bytes;
     pthread_mutex_lock(&p->manager->mutex);
     cJSON *j=p->current->json,*current=cJSON_GetObjectItemCaseSensitive(j,"current_file");
     if(!current) { current=cJSON_CreateObject(); cJSON_AddItemToObject(j,"current_file",current); }
+    if(strcmp(phase,"transferring")) speed=0;
+    json_number(j,"speed_bytes_per_second",speed);
+    json_number(current,"speed_bytes_per_second",speed);
     js(j,"phase",phase); js(current,"path",p->path); js(current,"file",strrchr(p->path,'/')+1);
+    if(!strcmp(phase,"preparing") || !cJSON_GetObjectItemCaseSensitive(current,"fileId")) {
+        struct stat st; char id[67];
+        cJSON_DeleteItemFromObjectCaseSensitive(current,"fileId");
+        if(!lstat(p->path,&st) && S_ISREG(st.st_mode)) { file_identity(p->path,&st,id); js(current,"fileId",id); }
+    }
     js(current,"phase",phase); json_number(current,"bytes_total",(double)p->size);
     json_number(current,"bytes_uploaded",(double)bytes);
     double percent=p->size?100.0*(double)bytes/(double)p->size:0;
@@ -190,6 +203,23 @@ static void update_progress(void *context,const char *phase,uint64_t bytes,uint6
     percent=p->total?100.0*(double)done/(double)p->total:0;
     json_number(j,"progress_percent",percent>=100?99.9:percent);
     char now[32]; timestamp(now); js(j,"updated_at",now);
+    if(!strcmp(phase,"transferring")) {
+        struct timespec ts; clock_gettime(CLOCK_MONOTONIC,&ts);
+        double now_mono=(double)ts.tv_sec+(double)ts.tv_nsec/1e9;
+        if(now_mono-p->last_log>=1 && speed>0) {
+            p->last_log=now_mono;
+            char line[256],log_path[PATH_MAX];
+            int n=snprintf(line,sizeof(line),"%s task=%s phase=transferring bytes=%llu/%llu speed=%.2f KiB/s speed_bytes_per_second=%.2f\n",
+                now,str(j,"task_id"),(unsigned long long)bytes,(unsigned long long)p->size,speed/1024,speed);
+            if(n>0 && (size_t)n<sizeof(line)) {
+                fputs(line,stderr);
+                if(!path_join(log_path,sizeof(log_path),settings.runtime,"logs/service.log")) {
+                    int fd=open(log_path,O_WRONLY|O_APPEND|O_CREAT|O_NOFOLLOW|O_CLOEXEC,0600);
+                    if(fd>=0) { (void)write_all(fd,line,(size_t)n); close(fd); }
+                }
+            }
+        }
+    }
     pthread_mutex_unlock(&p->manager->mutex);
     (void)total;
 }
@@ -250,13 +280,16 @@ static void execute(task_manager *m,task *t) {
     for(size_t i=0;i<p.count;i++) {
         plan *item=&p.items[i]; cJSON *result;
         progress.path=item->path; progress.size=item->size; progress.current_bytes=0;
-        update_progress(&progress,"preparing",0,item->size);
+        progress.last_log=0;
+        update_progress(&progress,"preparing",0,item->size,0);
         if(item->conflict) snprintf(item->error,sizeof(item->error),"Multiple local files map to the same OSS object; none uploaded");
         if(item->error[0]) {
             result=cJSON_CreateObject(); js(result,"path",item->path); js(result,"file",strrchr(item->path,'/')+1);
             js(result,"status","failed"); jb(result,"ok",0); js(result,"error",item->error);
-        } else { error[0]=0; result=process_file_progress(item->path,item->dest,error,update_progress,&progress); }
+        } else { error[0]=0; result=process_file_progress(item->path,item->dest,cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(t->json,"delete_after_upload")),error,update_progress,&progress); }
         pthread_mutex_lock(&m->mutex);
+        if(!cJSON_GetObjectItemCaseSensitive(result,"local_deleted")) jb(result,"local_deleted",0);
+        json_number(result,"updatedAt",epoch_ms());
         const char *status=str(result,"status");
         progress.transferred+=progress.current_bytes;
         if(!strcmp(status,"uploaded") || !strcmp(status,"skipped") || !strcmp(status,"empty")) progress.settled+=item->size;
@@ -264,6 +297,8 @@ static void execute(task_manager *m,task *t) {
         json_number(t->json,"bytes_done",(double)progress.settled);
         json_number(t->json,"bytes_uploaded",(double)progress.transferred);
         cJSON *current=cJSON_GetObjectItemCaseSensitive(t->json,"current_file");
+        json_number(t->json,"speed_bytes_per_second",0);
+        json_number(current,"speed_bytes_per_second",0);
         js(current,"phase",status);
         if(strcmp(status,"failed")) json_number(current,"progress_percent",100);
         double percent=progress.total?100.0*(double)progress.settled/(double)progress.total:0;
@@ -281,6 +316,7 @@ static void execute(task_manager *m,task *t) {
     pthread_mutex_unlock(&m->mutex);
 finish:
     pthread_mutex_lock(&m->mutex);
+    json_number(t->json,"speed_bytes_per_second",0);
     js(t->json,"phase",str(t->json,"status"));
     if(!strcmp(str(t->json,"status"),"completed")) json_number(t->json,"progress_percent",100);
     timestamp(now); js(t->json,"finished_at",now); save(m,t); pthread_mutex_unlock(&m->mutex);
@@ -318,6 +354,9 @@ int tasks_start(task_manager *m,char *error) {
         if(active(str(j,"status"))) {
             char now[32]; timestamp(now); js(j,"status","interrupted"); js(j,"finished_at",now); js(j,"error","Service stopped before completion; resubmit path to retry");
             js(j,"phase","interrupted");
+            json_number(j,"speed_bytes_per_second",0);
+            cJSON *current=cJSON_GetObjectItemCaseSensitive(j,"current_file");
+            if(current) json_number(current,"speed_bytes_per_second",0);
             if(save(m,t)) { closedir(dir); goto bad; }
         }
     }

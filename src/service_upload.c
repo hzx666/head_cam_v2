@@ -87,11 +87,12 @@ static int metadata(const char *dest,const char *name,const head_identity *id,
 done:
     cJSON_Delete(j); return rc;
 }
-cJSON *process_file_progress(const char *path,const char *destination,char *error,
+cJSON *process_file_progress(const char *path,const char *destination,int delete_after_upload,char *error,
                             upload_progress_fn progress,void *context) {
     const char *name=strrchr(path,'/'); name=name?name+1:path;
     cJSON *result=cJSON_CreateObject(),*remote=NULL;
     js(result,"path",path); js(result,"file",name); js(result,"status","failed"); jb(result,"ok",0);
+    jb(result,"local_deleted",0);
     head_identity id; int fd=-1,exists; struct stat initial,after;
     char resolved[PATH_MAX],sha[65],after_sha[65]; double duration=0;
     if(head_parse(name,&id,error)) goto done;
@@ -101,8 +102,10 @@ cJSON *process_file_progress(const char *path,const char *destination,char *erro
     if(fd<0 || fstat(fd,&initial) || !S_ISREG(initial.st_mode)) { snprintf(error,ERROR_SIZE,"File is missing, unreadable or not regular"); goto done; }
     char fd_path[128]; snprintf(fd_path,sizeof(fd_path),"/proc/self/fd/%d",fd);
     if(!realpath(fd_path,resolved) || strcmp(resolved,path)) { snprintf(error,ERROR_SIZE,"File location changed while opening"); goto done; }
+    char file_id[67]; file_identity(path,&initial,file_id);
+    js(result,"fileId",file_id);
     json_number(result,"size",(double)initial.st_size);
-    if(progress) progress(context,"preparing",0,(uint64_t)initial.st_size);
+    if(progress) progress(context,"preparing",0,(uint64_t)initial.st_size,0);
     if(!initial.st_size) { js(result,"status","empty"); jb(result,"ok",1); goto done; }
     if(mcap_duration(fd,&duration,error) || sha256_fd(fd,sha) || fstat(fd,&after) || !same_file(&initial,&after)) {
         if(!error[0]) snprintf(error,ERROR_SIZE,"File changed while parsing/checksumming");
@@ -111,7 +114,7 @@ cJSON *process_file_progress(const char *path,const char *destination,char *erro
     js(result,"ossPath",destination); json_number(result,"duration",duration); js(result,"sha256",sha);
     cJSON_AddNullToObject(result,"remote_sha256"); cJSON_AddNullToObject(result,"same_content");
     js(result,"checksum_status","unknown"); jb(result,"already_exists",0);
-    if(progress) progress(context,"checking_remote",0,(uint64_t)initial.st_size);
+    if(progress) progress(context,"checking_remote",0,(uint64_t)initial.st_size,0);
     exists=remote_stat(destination,&remote,error);
     if(exists<0) goto done;
     jb(result,"already_exists",exists);
@@ -133,24 +136,39 @@ cJSON *process_file_progress(const char *path,const char *destination,char *erro
         snprintf(meta,sizeof(meta),"x-oss-meta-sha256:%s",sha);
         if(path_join(checkpoint,sizeof(checkpoint),settings.runtime,"checkpoints")) goto done;
         const char *args[]={"cp",source,destination,"--force","--meta",meta,"--checkpoint-dir",checkpoint,"--parallel=1","--jobs=1",NULL};
-        if(progress) progress(context,"transferring",0,(uint64_t)initial.st_size);
+        if(progress) progress(context,"transferring",0,(uint64_t)initial.st_size,0);
         if(oss_run_progress(args,NULL,error,progress,context,(uint64_t)initial.st_size)) goto done;
-        if(progress) progress(context,"verifying",(uint64_t)initial.st_size,(uint64_t)initial.st_size);
+        if(progress) progress(context,"verifying",(uint64_t)initial.st_size,(uint64_t)initial.st_size,0);
         cJSON_Delete(remote); remote=NULL;
         if(remote_stat(destination,&remote,error)!=1) { snprintf(error,ERROR_SIZE,"Cannot verify OSS object after upload"); goto done; }
         const char *saved=str(remote,"x-oss-meta-sha256");
         js(result,"remote_sha256",saved);
         if(strcmp(saved,sha)) { snprintf(error,ERROR_SIZE,"Remote SHA256 metadata missing or changed after upload"); goto done; }
     }
-    if(progress) progress(context,"verifying",exists?0:(uint64_t)initial.st_size,(uint64_t)initial.st_size);
+    if(progress) progress(context,"verifying",exists?0:(uint64_t)initial.st_size,(uint64_t)initial.st_size,0);
     if(sha256_fd(fd,after_sha) || fstat(fd,&after) || !same_file(&initial,&after) || strcmp(sha,after_sha)) {
         snprintf(error,ERROR_SIZE,"Local file changed during upload/check; remote content cannot be confirmed");
         cJSON_DeleteItemFromObjectCaseSensitive(result,"same_content"); cJSON_AddNullToObject(result,"same_content");
         js(result,"checksum_status","unknown"); goto done;
     }
     js(result,"remote_sha256",sha); jb(result,"same_content",1); js(result,"checksum_status","match");
-    if(progress) progress(context,"metadata",exists?0:(uint64_t)initial.st_size,(uint64_t)initial.st_size);
+    if(progress) progress(context,"metadata",exists?0:(uint64_t)initial.st_size,(uint64_t)initial.st_size,0);
     if(metadata(destination,name,&id,&initial,duration,sha,remote,error)) goto done;
+    jb(result,"upload_verified",1);
+    if(!exists) json_number(result,"uploadedAt",epoch_ms());
+    if(delete_after_upload) {
+        /* Recheck after metadata; refuse a replaced path or changed inode. */
+        if(!realpath(path,resolved) || strcmp(resolved,path) ||
+           lstat(path,&after) || !same_file(&initial,&after)) {
+            snprintf(error,ERROR_SIZE,"Upload verified but local file changed before deletion; file retained");
+            goto done;
+        }
+        if(unlink(path)) {
+            snprintf(error,ERROR_SIZE,"Upload verified but local deletion failed: %s",strerror(errno));
+            goto done;
+        }
+        jb(result,"local_deleted",1);
+    }
     js(result,"status",exists?"skipped":"uploaded"); jb(result,"ok",1); error[0]=0;
 done:
     if(error[0]) js(result,"error",error);

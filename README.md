@@ -4,7 +4,7 @@
 
 手机 App 浏览头环目录、选择目录后提交任务。C 服务递归扫描 MCAP，解析头环文件名，校验 SHA256，上传 OSS 并写入 metadata。接口和任务管理参考 teleop，头环命名及 metadata 参考 develop 的 head_cam。
 
-**没有附件处理，没有 MNS 通知，不自动修复或删除本地 MCAP。**
+**没有附件处理，没有 MNS 通知，不自动修复本地 MCAP；支持 App 选择上传成功后删除本地文件。**
 
 ## 单独启动上传组件
 
@@ -56,7 +56,7 @@ POST 立即返回任务 ID，后台逐个上传；`accepted=true` 不表示上�
 - 远端明确返回 NoSuchKey 才上传；权限、网络错误不当作对象不存在。
 - 已存在且 SHA256 相同：跳过重传，刷新 metadata；不同：报错不覆盖；历史对象无有效 SHA256：跳过、标记 unknown，不修改对象。比较依据远端 metadata，不下载远端文件重新计算。
 - 同批多个本地文件映射到同一 OSS key 时均报错；单文件失败不阻止后续文件。
-- 文件和 metadata 都处理成功才计成功；metadata 失败可重新提交补写。本地数据始终保留。
+- 文件和 metadata 都处理成功才计成功；metadata 失败可重新提交补写。默认保留本地数据；传 delete_after_upload=true 时仅删除校验及 metadata 均成功的文件。
 - 单任务最多 10,000 个主数据文件，递归深度最多 128。需解析的单条记录及 Chunk 解压结果最多 64 MiB，超限明确报错；大文件不整体载入内存。
 
 ## OSS metadata
@@ -97,3 +97,18 @@ POST 立即返回任务 ID，后台逐个上传；`accepted=true` 不表示上�
 构建说明见 [docs/BUILD.md](docs/BUILD.md)。成品加密内嵌凭证，运行时在私有 `runtime/session-*` 释放 `0600` 凭证配置，正常退出清理，异常残留下次启动时清理。AK/SK 不传入进程参数、不输出到接口或日志。二进制含解密材料，设备被控制后仍可能提取密钥。
 
 MCAP 格式依据 [MCAP Specification](https://mcap.dev/spec)，metadata CLI 依据 [ossutil set-meta](https://www.alibabacloud.com/help/en/oss/developer-reference/set-meta)。第三方来源见 [third_party/README.md](third_party/README.md)。
+
+
+### 上传成功后删除本地文件
+
+App 提供“上传成功后删除设备本地文件”开关，默认关闭。目录上传和所选文件上传均可携带可选布尔参数 `delete_after_upload`：
+
+```json
+{"path":"/mnt/sd/sd0/采集目录","delete_after_upload":true}
+```
+
+- 不传或传 `false` 保留本地文件；仅接受 JSON 布尔值，字符串、数字和 null 返回 400。
+- `true` 仅删除 SHA256 校验一致且 metadata 写入成功的文件，包括远端已存在且内容一致的 skipped 文件。空文件、内容 unknown、校验不一致、上传或 metadata 失败的文件均保留。不删除目录。
+- 提交响应与任务查询返回 `delete_after_upload`；逐文件结果返回 `local_deleted`。删除失败时该文件记 failed，返回 error，可重新提交补做；远端已上传的对象保留。历史任务可能缺少新字段，App 按 false 处理。
+- 同目录、同文件范围且删除选项相同的活动任务才视为重复提交；删除选项不同返回 409，不修改进行中的任务。
+- App 保存和重试任务时同时保存并传回该选项；根据 `local_deleted` 显示“已删除本地文件”并刷新文件列表。上传期间仍不得修改文件或目录。

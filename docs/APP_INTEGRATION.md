@@ -326,7 +326,7 @@ curl 'http://192.168.1.10:38127/upload/<task_id>'
 - App 退出重进可恢复查询；断网重连不会直接判任务失败；服务重启后显示 interrupted。
 - 至少完成一次真实 MCAP 上传，核对 OSS 文件与 metadata；仅 health 成功不算上传链路验收完成。
 
-当前无附件、MNS 通知、预览、质检事件、WebSocket、取消/暂停或任务列表接口。上传后设备本地数据保留；未完成的 `.mcap.incomplete` 文件不自动修复或上传。文件命名与业务规则见 [README.md](../README.md)。
+当前无附件、MNS 通知、预览、质检事件、WebSocket、取消/暂停或任务列表接口。上传后默认保留设备本地数据，可通过 delete_after_upload 选择成功后删除；未完成的 `.mcap.incomplete` 文件不自动修复或上传。文件命名与业务规则见 [README.md](../README.md)。
 
 ## 11. 新增：目录内单文件和多文件上传
 
@@ -384,3 +384,27 @@ curl 'http://192.168.1.10:38127/upload/<task_id>'
 - 服务重启后以 interrupted 为准，实时进度仅在文件处理边界持久化。旧任务没有这些字段时，回退到计数和不定进度。
 
 完整字段语义见 [API.md](API.md#实时字节进度新版)。App 验收需覆盖单个大文件的中间百分比、多文件整批进度、跳过、失败、校验阶段，以及 completed 之前不显示 100%。
+
+
+### 上传成功后删除本地文件
+
+App 提供“上传成功后删除设备本地文件”开关，默认关闭。目录上传和所选文件上传均可携带可选布尔参数 `delete_after_upload`：
+
+```json
+{"path":"/mnt/sd/sd0/采集目录","delete_after_upload":true}
+```
+
+- 不传或传 `false` 保留本地文件；仅接受 JSON 布尔值，字符串、数字和 null 返回 400。
+- `true` 仅删除 SHA256 校验一致且 metadata 写入成功的文件，包括远端已存在且内容一致的 skipped 文件。空文件、内容 unknown、校验不一致、上传或 metadata 失败的文件均保留。不删除目录。
+- 提交响应与任务查询返回 `delete_after_upload`；逐文件结果返回 `local_deleted`。删除失败时该文件记 failed，返回 error，可重新提交补做；远端已上传的对象保留。历史任务可能缺少新字段，App 按 false 处理。
+- 同目录、同文件范围且删除选项相同的活动任务才视为重复提交；删除选项不同返回 409，不修改进行中的任务。
+- App 保存和重试任务时同时保存并传回该选项；根据 `local_deleted` 显示“已删除本地文件”并刷新文件列表。上传期间仍不得修改文件或目录。
+
+
+### 上传速率
+
+任务查询顶层和 `current_file` 均提供 `speed_bytes_per_second`（数字，字节/秒），取自 ossutil 最近一次 Speed 输出，KB/MB/GB 按 1024 换算。App 可除以 1024 显示 KiB/s，除以 1048576 显示 MiB/s。等待、扫描、解析、校验、metadata 和结束阶段为 0；尚无有效速率输出时也为 0，历史任务可能缺少字段。该值是工具最近一次报告的速率，不是每次轮询重新计算的瞬时网卡速率。
+
+传输时向 `runtime/logs/service.log` 和服务标准错误输出速率日志（守护进程启动时标准错误进入 `logs/upload.log`），包含 task、已传字节/文件总字节、`speed=... KiB/s` 及 `speed_bytes_per_second`，最多每秒一条。实际更新频率取决于 ossutil；很小的文件可能结束前没有速率报告。
+
+App 目录页可通过 `GET /files` 的 `upload_state=UPLOADED` 和 `NOT_UPLOADED` 分别加载两个页签。每行优先显示文件名、大小、录制时间和上传状态，文件详情可直接使用返回的 `files` 元素。已上传的保留文件允许再次提交，校验一致后显示“已上传，本次跳过”。任务完成后刷新两个列表。字段和分页规则见 [文件列表与上传状态](API.md#app-文件列表与上传状态)。

@@ -233,3 +233,42 @@ App 展示两条进度：整批使用顶层 progress_percent，当前文件使�
 | 503 | 队列/连接已满、服务停止中或持久化异常 |
 
 设备设置 HEAD_CAM_UPLOAD_TOKEN 时，每次请求添加 `Authorization: Bearer <令牌>`。AK/SK 不出现在请求或响应里。
+
+
+### 上传成功后删除本地文件
+
+App 提供“上传成功后删除设备本地文件”开关，默认关闭。目录上传和所选文件上传均可携带可选布尔参数 `delete_after_upload`：
+
+```json
+{"path":"/mnt/sd/sd0/采集目录","delete_after_upload":true}
+```
+
+- 不传或传 `false` 保留本地文件；仅接受 JSON 布尔值，字符串、数字和 null 返回 400。
+- `true` 仅删除 SHA256 校验一致且 metadata 写入成功的文件，包括远端已存在且内容一致的 skipped 文件。空文件、内容 unknown、校验不一致、上传或 metadata 失败的文件均保留。不删除目录。
+- 提交响应与任务查询返回 `delete_after_upload`；逐文件结果返回 `local_deleted`。删除失败时该文件记 failed，返回 error，可重新提交补做；远端已上传的对象保留。历史任务可能缺少新字段，App 按 false 处理。
+- 同目录、同文件范围且删除选项相同的活动任务才视为重复提交；删除选项不同返回 409，不修改进行中的任务。
+- App 保存和重试任务时同时保存并传回该选项；根据 `local_deleted` 显示“已删除本地文件”并刷新文件列表。上传期间仍不得修改文件或目录。
+
+
+### 上传速率
+
+任务查询顶层和 `current_file` 均提供 `speed_bytes_per_second`（数字，字节/秒），取自 ossutil 最近一次 Speed 输出，KB/MB/GB 按 1024 换算。App 可除以 1024 显示 KiB/s，除以 1048576 显示 MiB/s。等待、扫描、解析、校验、metadata 和结束阶段为 0；尚无有效速率输出时也为 0，历史任务可能缺少字段。该值是工具最近一次报告的速率，不是每次轮询重新计算的瞬时网卡速率。
+
+传输时向 `runtime/logs/service.log` 和服务标准错误输出速率日志（守护进程启动时标准错误进入 `logs/upload.log`），包含 task、已传字节/文件总字节、`speed=... KiB/s` 及 `speed_bytes_per_second`，最多每秒一条。实际更新频率取决于 ossutil；很小的文件可能结束前没有速率报告。
+
+### App 文件列表与上传状态
+
+`GET /files?path=...&upload_state=UPLOADED&offset=0` 查询已上传且仍在设备上的文件。
+`upload_state=NOT_UPLOADED` 查询其他本地文件，包括正在处理和失败的文件。不传筛选参数则返回两类文件。
+列表仅包含当前目录的完整后缀 `.mcap` 文件，每页最多 200 项，按文件名排序。
+`total` 和 `total_bytes` 统计筛选后的全部文件，`next_offset` 为下一页偏移或 null。目录在翻页期间可能变化，任务结束后从 offset=0 刷新。
+`device_sn` 来自 `HEAD_CAM_MONITOR_CONFIG` 指向的配置中的 `device_id`，未配置时为 null。`snapshot_at` 为查询时间（Unix 毫秒）。
+
+`files` 的每项包括：
+
+- 基本信息：`fileId`、`name`、`path`、`size`（字节）、`modifiedAt`、`recordedAt`、`sealState`。录制时间按文件名中的北京时间解析，无法解析时为 null。`SEALED` 表示完整文件后缀，MCAP 结构仍在上传时校验。
+- 状态和进度：`uploadState` 为 UPLOADED、NOT_UPLOADED、UPLOADING 或 FAILED，另有 `uploadedBytes`、`progressPercent`、`taskId`。已上传文件为 100%，再次提交时仍执行现有远端校验。
+- 上传详情：`sha256`、`remoteSha256`、`objectKey`、`durationMs`、`uploadedAt`、`updatedAt`、`errorCode`、`errorMessage`。未知值为 null；时间使用 Unix 毫秒，哈希为不带前缀的十六进制字符串。`uploadedAt` 是本机记录的实际上传时间，匹配远端后跳过不会改写它。
+- 操作：`canUpload`、`blockedReason`。已上传且保留的文件可以再次提交。当前处理中、无效文件名或空文件可显示不可选原因；POST 仍独立校验提交范围。
+
+列表以本地任务记录和文件身份为依据，不访问 OSS，也不读取文件内容。文件被修改或替换后不会继承旧状态。升级前的历史任务缺少文件身份，首次重新提交并确认远端内容后才会进入已上传页签。已删除文件不出现在列表，仍可通过任务结果查看。
