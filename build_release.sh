@@ -62,7 +62,14 @@ rm -f "$ROOT/dist/head-cam-upload" "$ROOT/dist/head-cam-monitor" "$ROOT/dist/bus
 install -m 700 "$ROOT/scripts/boot_autostart.sh" "$ROOT/scripts/service_entry.sh" "$ROOT/scripts/run-upload" "$ROOT/scripts/run-monitor" "$ROOT/dist/"
 install -m 700 "$ROOT/scripts/manual_dhcp.sh" "$ROOT/dist/manual_dhcp.sh"
 install -m 600 "$ROOT/config/monitor.json" "$ROOT/dist/monitor.json"
-install -m 600 "$ROOT/SERVICE_VERSION" "$ROOT/dist/SERVICE_VERSION"
+release_version=$(cat "$ROOT/SERVICE_VERSION")
+release_version=${release_version%$'\r'}
+if [[ ! $release_version =~ ^[0-9]{8}\.[0-9]{3}$ ]]; then
+    echo 'Invalid SERVICE_VERSION; expected YYYYMMDD.NNN' >&2
+    exit 1
+fi
+printf '%s\n' "$release_version" > "$ROOT/dist/SERVICE_VERSION"
+chmod 600 "$ROOT/dist/SERVICE_VERSION"
 (
     cd "$ROOT/dist"
     sha256sum head-cam-service service_entry.sh run-upload run-monitor boot_autostart.sh manual_dhcp.sh monitor.json SERVICE_VERSION > SHA256SUMS

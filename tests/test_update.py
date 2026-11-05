@@ -75,6 +75,14 @@ class UpdateTest(unittest.TestCase):
         self.assertNotEqual(self.update().returncode, 0)
         self.assertEqual((self.home/'current').resolve(), self.old)
 
+    def test_crlf_versions_update_with_original_checksums(self):
+        for release in (self.old, self.remote):
+            (release/'SERVICE_VERSION').write_bytes((release.name+'\r\n').encode())
+            self.manifest(release)
+        result = self.update()
+        self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+        self.assertEqual((self.home/'current').resolve().name, self.remote.name)
+
     def test_failed_selfcheck_keeps_old(self):
         (self.remote/'head-cam-service').write_text('#!/bin/sh\nexit 1\n')
         self.manifest(self.remote)
@@ -100,6 +108,15 @@ class UpdateTest(unittest.TestCase):
         result = self.update()
         self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
         self.assertEqual(sorted(p.name for p in (self.home/'releases').iterdir()), ['20261102.001', '20261102.002'])
+
+    def test_failed_switch_preserves_existing_backups(self):
+        backup = self.home/'releases/20261031.001'
+        backup.mkdir()
+        (self.home/'current.new').mkdir()
+        result = self.update()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertTrue(backup.is_dir())
+        self.assertEqual((self.home/'current').resolve(), self.old)
 
     def test_two_updates_from_flat_install(self):
         (self.home/'current').unlink()

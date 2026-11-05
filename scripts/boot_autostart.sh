@@ -38,6 +38,12 @@ FILES='head-cam-service service_entry.sh run-upload run-monitor boot_autostart.s
 DIY_PATH=${HEAD_CAM_DIY_PATH:-/config/diy.sh}
 log() { printf '[head-cam] %s %s\n' "$(date -u +%FT%TZ)" "$*"; }
 valid_version() { printf '%s\n' "$1" | grep -Eq '^[0-9]{8}\.[0-9]{3}$'; }
+read_version() {
+    value=$(cat "$1") || { log "Cannot read version file: $1" >&2; return 1; }
+    value=${value%"$(printf '\r')"}
+    valid_version "$value" || { log "Invalid version in $1; expected YYYYMMDD.NNN" >&2; return 1; }
+    printf '%s\n' "$value"
+}
 prepare() {
     case "$HEAD_CAM_HOME" in /*) ;; *) return 1;; esac
     [ "$HEAD_CAM_HOME" != / ] || return 1
@@ -48,7 +54,7 @@ prepare() {
 active() { if [ -x "$HEAD_CAM_HOME/current/head-cam-service" ]; then readlink -f "$HEAD_CAM_HOME/current"; else printf '%s\n' "$HEAD_CAM_HOME"; fi; }
 verify() (
     dir=$1; version=$2
-    [ "$(cat "$dir/SERVICE_VERSION")" = "$version" ] || exit 1
+    [ "$(read_version "$dir/SERVICE_VERSION")" = "$version" ] || exit 1
     [ "$(wc -l < "$dir/SHA256SUMS")" -eq 8 ] || exit 1
     for item in $FILES; do
         [ -f "$dir/$item" ] && [ ! -L "$dir/$item" ] || exit 1
@@ -74,13 +80,14 @@ update_release() (
     [ "$OSS_UPDATE_ENABLED" = true ] || exit 0
     exec 8>"$HEAD_CAM_HOME/.update-cache/update.lock"
     flock -n 8 || exit 0
-    old=$(active); current=$(cat "$old/SERVICE_VERSION")
+    old=$(active); current=$(read_version "$old/SERVICE_VERSION") || exit 1
     listing=$(bounded 130 "$old/head-cam-service" --update-list "$PREFIX") || exit 1
     remote=$(printf '%s\n' "$listing" | sed -n "s#^${PREFIX}\([0-9]\{8\}\.[0-9]\{3\}\)/SHA256SUMS\$#\1#p" | sort | tail -n 1)
     [ -n "$remote" ] || exit 0
     valid_version "$remote" || exit 1
     [ "$remote" != "$current" ] || exit 0
     [ "$(printf '%s\n%s\n' "$current" "$remote" | sort | tail -n 1)" = "$remote" ] || exit 0
+    # 下载放在临时分区，避免完整下载包额外占用安装分区。
     stage=$(mktemp -d /tmp/head-cam-download.XXXXXX)
     incoming=$HEAD_CAM_HOME/releases/.incoming-$remote
     trap 'rm -rf "$stage" "$incoming"' 0
@@ -88,15 +95,6 @@ update_release() (
         bounded 130 "$old/head-cam-service" --update-get "$PREFIX$remote/$item" --update-output "$stage/$item" || exit 1
     done
     verify "$stage" "$remote" || exit 1
-    # 两个持久版本槽。新包校验完成后才回收过期槽，始终保留当前版本。
-    for candidate in "$HEAD_CAM_HOME"/releases/*; do
-        [ -d "$candidate" ] && [ ! -L "$candidate" ] || continue
-        valid_version "${candidate##*/}" || continue
-        [ "$candidate" = "$old" ] || [ "${candidate##*/}" = "$remote" ] || rm -rf "$candidate"
-    done
-    if [ "$old" != "$HEAD_CAM_HOME" ] && [ -x "$HEAD_CAM_HOME/head-cam-service" ]; then
-        rm -f "$HEAD_CAM_HOME/head-cam-service"
-    fi
     if [ -e "$HEAD_CAM_HOME/releases/$remote" ]; then
         verify "$HEAD_CAM_HOME/releases/$remote" "$remote" || exit 1
     else
@@ -116,6 +114,15 @@ update_release() (
     ln -sfn "$previous_target" "$HEAD_CAM_HOME/previous" || exit 1
     switch_to "$remote" || exit 1
     sync
+    # 切换成功后清理，只保留当前版和本次切换前的上一版。
+    for candidate in "$HEAD_CAM_HOME"/releases/*; do
+        [ -d "$candidate" ] && [ ! -L "$candidate" ] || continue
+        valid_version "${candidate##*/}" || continue
+        [ "$candidate" = "$old" ] || [ "${candidate##*/}" = "$remote" ] || rm -rf "$candidate"
+    done
+    if [ "$old" != "$HEAD_CAM_HOME" ] && [ -x "$HEAD_CAM_HOME/head-cam-service" ]; then
+        rm -f "$HEAD_CAM_HOME/head-cam-service"
+    fi
     log "Updated to $remote"
 )
 watch_gateway() (
@@ -222,8 +229,8 @@ install_service() {
     prepare
     [ "$(id -u)" = 0 ] || { log 'Install requires root';return 1; }
     [ "$BASE" = "$HEAD_CAM_HOME" ] || { log 'Run install from the final device directory';return 1; }
-    version=$(cat "$BASE/SERVICE_VERSION");valid_version "$version"
-    verify "$BASE" "$version"
+    version=$(read_version "$BASE/SERVICE_VERSION") || return 1
+    verify "$BASE" "$version" || { log 'Release verification failed; check SHA256SUMS, required files and self-check' >&2; return 1; }
     [ -f "$HEAD_CAM_HOME/monitor.json" ] || { log 'Missing monitor.json';return 1; }
     # 仅注册启动入口，不再复制整份程序，避免小分区重复占用。
     exec 6>"$HEAD_CAM_HOME/runtime/install.lock"
@@ -266,6 +273,19 @@ case "${1:-run}" in
  restart) stop_service && start_service;;
  update-internal) prepare;update_release;;
  update) prepare;exec 9>"$HEAD_CAM_HOME/runtime/service.lock";flock -n 9 || { log 'Running; update deferred until restart';exit 0; };update_release;;
- status) if [ -f "$HEAD_CAM_HOME/runtime/service.pid" ];then cat "$HEAD_CAM_HOME/runtime/service.pid";else log 'Not started';fi;;
+ status)
+    release=$(active)
+    version=$(read_version "$release/SERVICE_VERSION") || exit 1
+    printf 'Active version: %s\nRelease path: %s\n' "$version" "$release"
+    if [ -f "$HEAD_CAM_HOME/previous/SERVICE_VERSION" ]; then
+        previous_version=$(read_version "$HEAD_CAM_HOME/previous/SERVICE_VERSION") || exit 1
+        printf 'Previous version: %s\n' "$previous_version"
+    fi
+    if [ -f "$HEAD_CAM_HOME/runtime/service.pid" ]; then
+        pid=$(cat "$HEAD_CAM_HOME/runtime/service.pid")
+        case "$pid" in ''|*[!0-9]*) log 'Invalid service PID'; exit 1;; esac
+        if kill -0 "$pid" 2>/dev/null; then printf 'Service PID: %s\n' "$pid"
+        else printf 'Service: not running (stale PID: %s)\n' "$pid"; fi
+    else printf 'Service: not started\n'; fi;;
  *) echo 'Usage: boot_autostart.sh install|start|stop|restart|status|run|update' >&2;exit 64;;
 esac
