@@ -61,7 +61,10 @@ int main(int argc,char **argv) {
     if(argc!=1)return upload_main(argc,argv);
     char exe[PATH_MAX],home[PATH_MAX],runtime[PATH_MAX],logs[PATH_MAX],lock[PATH_MAX];
     ssize_t n=readlink("/proc/self/exe",exe,sizeof(exe)-1);if(n<0)return 1;exe[n]=0;
-    snprintf(home,sizeof(home),"%s",exe);char *slash=strrchr(home,'/');if(!slash)return 1;*slash=0;
+    const char *packed=getenv("HEAD_CAM_PACKED_EXE");
+    const char *origin=packed && *packed=='/' ? packed : exe;
+    if(strlen(origin)>=sizeof(home))return 1;
+    strcpy(home,origin);char *slash=strrchr(home,'/');if(!slash)return 1;*slash=0;
     const char *configured=getenv("HEAD_CAM_HOME");if(configured){if(strlen(configured)>=sizeof(home))return 1;strcpy(home,configured);}
     if(setenv("HEAD_CAM_HOME",home,1) || path_join(runtime,sizeof(runtime),home,"runtime") || private_directory(runtime) ||
        path_join(logs,sizeof(logs),home,"logs") || private_directory(logs) || path_join(lock,sizeof(lock),runtime,"supervisor.lock"))return 1;

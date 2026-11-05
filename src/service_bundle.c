@@ -61,7 +61,8 @@ int bundle_open(const char *config_override,const char *ossutil_override,char *e
     if(strspn(endpoint,"abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789.-:")!=strlen(endpoint)) goto invalid;
     if(strpbrk(str(creds,"security_token"),"\r\n")) goto invalid;
     snprintf(settings.bucket,sizeof(settings.bucket),"%s",bucket);
-    if(path_join(settings.bundle_dir,sizeof(settings.bundle_dir),settings.runtime,"session-XXXXXX") || !mkdtemp(settings.bundle_dir)) goto io_error;
+    snprintf(settings.bundle_dir,sizeof(settings.bundle_dir),"/tmp/head-cam-session-XXXXXX");
+    if(!mkdtemp(settings.bundle_dir)) { settings.bundle_dir[0]=0; goto io_error; }
     if(path_join(settings.ossutil,sizeof(settings.ossutil),settings.bundle_dir,"ossutil") ||
        path_join(settings.config,sizeof(settings.config),settings.bundle_dir,"credentials") ||
        path_join(settings.ca,sizeof(settings.ca),settings.bundle_dir,"ca.crt")) goto io_error;

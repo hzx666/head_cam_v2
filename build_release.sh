@@ -22,14 +22,19 @@ if [[ $ARCH == arm64 ]]; then
     [[ -f "$DEPS/usr/lib/aarch64-linux-gnu/libcrypto.a" ]] || { echo 'First run: bash scripts/prepare_arm64.sh' >&2; exit 1; }
     CMAKE_TARGET=(-DCMAKE_TOOLCHAIN_FILE="$ROOT/cmake/arm64.cmake" -DSERVICE_DEPS="$DEPS")
     STRIP=aarch64-linux-gnu-strip
+    LAUNCHER_CC=aarch64-linux-gnu-gcc
+    LZMA_ARGS=(-I"$DEPS/usr/include" -I"$DEPS/usr/include/aarch64-linux-gnu" "$DEPS/usr/lib/aarch64-linux-gnu/liblzma.a")
 else
     OSSUTIL=${OSSUTIL_BIN:?Set OSSUTIL_BIN to static Linux x86_64 ossutil}
     CMAKE_TARGET=()
     STRIP=strip
+    LAUNCHER_CC=gcc
+    LZMA_ARGS=(-llzma)
 fi
 python3 "$ROOT/scripts/embed_bundle.py" "${CREDS[@]}" --ossutil "$OSSUTIL" \
     --ca "${CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}" --out "$WORK/bundle" --arch "$ARCH"
 cmake -S "$ROOT" -B "$WORK/build" "${CMAKE_TARGET[@]}" -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_FLAGS_RELEASE="-Os -DNDEBUG -ffunction-sections -fdata-sections" -DCMAKE_EXE_LINKER_FLAGS="-Wl,--gc-sections" \
     -DBUSYBOX_BIN="${BUSYBOX_BIN:-$ROOT/.deps/arm64/bin/busybox}" -DSERVICE_STATIC=ON -DSERVICE_TESTING=OFF -DBUNDLE_DIR="$WORK/bundle"
 cmake --build "$WORK/build" -j "${BUILD_JOBS:-4}"
 "$STRIP" "$WORK/build/head-cam-service"
@@ -37,13 +42,21 @@ if readelf -l "$WORK/build/head-cam-service" | grep -q INTERP; then
     echo 'Refusing non-static release.' >&2; exit 1
 fi
 # Running a cross-built self-check requires ARM binfmt support for its child helper.
+python3 "$ROOT/scripts/pack_service.py" "$WORK/build/head-cam-service" "$WORK"
+"$LAUNCHER_CC" -static -Os -ffunction-sections -fdata-sections -Wl,--gc-sections -I"$WORK" \
+    "$ROOT/src/packed_launcher.c" "$WORK/packed_payload.S" "${LZMA_ARGS[@]}" -o "$WORK/head-cam-service"
+"$STRIP" "$WORK/head-cam-service"
 if [[ $(uname -m) == aarch64 && $ARCH == arm64 || $(uname -m) == x86_64 && $ARCH == x86_64 ]]; then
-    "$WORK/build/head-cam-service" --self-check
+    "$WORK/head-cam-service" --self-check
 elif [[ -n ${QEMU_SELF_CHECK:-} ]]; then
-    qemu-aarch64 "$WORK/build/head-cam-service" --self-check
+    qemu-aarch64 "$WORK/head-cam-service" --self-check
+fi
+if (( $(stat -c %s "$WORK/head-cam-service") + 50000 > 5000000 )); then
+    echo 'Compressed binary exceeds release budget (5 MB including supporting files).' >&2
+    exit 1
 fi
 mkdir -p "$ROOT/dist"
-install -m 700 "$WORK/build/head-cam-service" "$ROOT/dist/head-cam-service"
+install -m 700 "$WORK/head-cam-service" "$ROOT/dist/head-cam-service"
 # 清理旧交付组件，避免误用旧进程入口。
 rm -f "$ROOT/dist/head-cam-upload" "$ROOT/dist/head-cam-monitor" "$ROOT/dist/busybox"
 install -m 700 "$ROOT/scripts/boot_autostart.sh" "$ROOT/scripts/service_entry.sh" "$ROOT/scripts/run-upload" "$ROOT/scripts/run-monitor" "$ROOT/dist/"

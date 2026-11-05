@@ -94,12 +94,33 @@ class UpdateTest(unittest.TestCase):
         self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
         self.assertEqual((self.home/'current').resolve().name, self.remote.name)
 
-    def test_keeps_two_backups(self):
+    def test_keeps_one_backup(self):
         for version in ('20261030.001', '20261031.001'):
             (self.home/'releases'/version).mkdir()
         result = self.update()
         self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
-        self.assertEqual(sorted(p.name for p in (self.home/'releases').iterdir()), ['20261031.001', '20261102.001', '20261102.002'])
+        self.assertEqual(sorted(p.name for p in (self.home/'releases').iterdir()), ['20261102.001', '20261102.002'])
+
+    def test_two_updates_from_flat_install(self):
+        (self.home/'current').unlink()
+        for name in FILES + ['SHA256SUMS']:
+            shutil.copy2(self.old/name, self.home/name)
+        original_config = (self.home/'monitor.json').read_bytes()
+        result = self.update()
+        self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+        self.assertEqual((self.home/'previous').resolve(), self.home)
+        self.assertTrue((self.home/'head-cam-service').exists())
+        next_release = self.root/'20261102.003'
+        shutil.copytree(self.remote, next_release)
+        (next_release/'SERVICE_VERSION').write_text(next_release.name+'\n')
+        self.manifest(next_release)
+        self.env['FAKE_RELEASE'] = str(next_release)
+        result = self.update()
+        self.assertEqual(result.returncode, 0, result.stdout+result.stderr)
+        self.assertEqual((self.home/'current').resolve().name, next_release.name)
+        self.assertEqual((self.home/'previous').resolve().name, self.remote.name)
+        self.assertFalse((self.home/'head-cam-service').exists())
+        self.assertEqual((self.home/'monitor.json').read_bytes(), original_config)
 
     @unittest.skipUnless(os.geteuid() == 0, 'installer needs root')
     def test_init_install_start_stop(self):

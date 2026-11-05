@@ -22,11 +22,15 @@ export PATH
 LOCK_HELPER=${HEAD_CAM_LOCK_HELPER:-$BASE/head-cam-service}
 if [ -z "${HEAD_CAM_LOCK_HELPER:-}" ] && [ -x "$BASE/current/head-cam-service" ];then LOCK_HELPER=$BASE/current/head-cam-service;fi
 flock() { "$LOCK_HELPER" --flock "$2"; }
+bounded() (
+    exec 6>&- 7>&- 8>&- 9>&-
+    exec timeout "$@"
+)
 BOOT_DELAY_SEC=${BOOT_DELAY_SEC:-60}
-BACKUP_KEEP=${BACKUP_KEEP:-2}
-OSS_UPDATE_ENABLED=${OSS_UPDATE_ENABLED:-false}
+OSS_UPDATE_ENABLED=${OSS_UPDATE_ENABLED:-true}
 # 正式固件接管 DHCP 后，可在 network.env 中设置 HEAD_CAM_AUTO_DHCP=false。
 [ ! -f "$HEAD_CAM_HOME/network.env" ] || . "$HEAD_CAM_HOME/network.env"
+export OSS_UPDATE_ENABLED
 HEAD_CAM_AUTO_DHCP=${HEAD_CAM_AUTO_DHCP:-true}
 HEAD_CAM_NETWORK_IFACE=${HEAD_CAM_NETWORK_IFACE:-wlan0}
 PREFIX=oss://ss-oss-data-platform/tools/device_monitor/head_cam_v2/
@@ -38,7 +42,7 @@ prepare() {
     case "$HEAD_CAM_HOME" in /*) ;; *) return 1;; esac
     [ "$HEAD_CAM_HOME" != / ] || return 1
     case "$HEAD_CAM_HOME" in *[!a-zA-Z0-9_./-]*) echo 'Install path must use ASCII without spaces' >&2;return 1;; esac
-    case "$BOOT_DELAY_SEC:$BACKUP_KEEP" in *[!0-9:]*|:*|*:) return 1;; esac
+    case "$BOOT_DELAY_SEC" in ''|*[!0-9]*) return 1;; esac
     mkdir -p "$HEAD_CAM_HOME/config" "$HEAD_CAM_HOME/runtime/upload" "$HEAD_CAM_HOME/runtime/monitor" "$HEAD_CAM_HOME/logs" "$HEAD_CAM_HOME/releases" "$HEAD_CAM_HOME/.update-cache"
 }
 active() { if [ -x "$HEAD_CAM_HOME/current/head-cam-service" ]; then readlink -f "$HEAD_CAM_HOME/current"; else printf '%s\n' "$HEAD_CAM_HOME"; fi; }
@@ -59,7 +63,7 @@ verify() (
     done
     chmod 700 "$dir"/head-cam-* "$dir"/*.sh "$dir"/run-*
     for item in boot_autostart.sh manual_dhcp.sh service_entry.sh run-upload run-monitor; do /bin/sh -n "$dir/$item" || exit 1;done
-    timeout 30 "$dir/head-cam-service" --self-check >/dev/null || exit 1
+    bounded 30 "$dir/head-cam-service" --self-check >/dev/null || exit 1
 )
 switch_to() {
     rm -f "$HEAD_CAM_HOME/current.new"
@@ -71,33 +75,47 @@ update_release() (
     exec 8>"$HEAD_CAM_HOME/.update-cache/update.lock"
     flock -n 8 || exit 0
     old=$(active); current=$(cat "$old/SERVICE_VERSION")
-    listing=$(timeout 130 "$old/head-cam-service" --update-list "$PREFIX") || exit 1
+    listing=$(bounded 130 "$old/head-cam-service" --update-list "$PREFIX") || exit 1
     remote=$(printf '%s\n' "$listing" | sed -n "s#^${PREFIX}\([0-9]\{8\}\.[0-9]\{3\}\)/SHA256SUMS\$#\1#p" | sort | tail -n 1)
     [ -n "$remote" ] || exit 0
     valid_version "$remote" || exit 1
     [ "$remote" != "$current" ] || exit 0
     [ "$(printf '%s\n%s\n' "$current" "$remote" | sort | tail -n 1)" = "$remote" ] || exit 0
-    stage=$(mktemp -d "$HEAD_CAM_HOME/.update-cache/download.XXXXXX")
-    trap 'rm -rf "$stage"' 0
+    stage=$(mktemp -d /tmp/head-cam-download.XXXXXX)
+    incoming=$HEAD_CAM_HOME/releases/.incoming-$remote
+    trap 'rm -rf "$stage" "$incoming"' 0
     for item in $FILES SHA256SUMS; do
-        timeout 130 "$old/head-cam-service" --update-get "$PREFIX$remote/$item" --update-output "$stage/$item" || exit 1
+        bounded 130 "$old/head-cam-service" --update-get "$PREFIX$remote/$item" --update-output "$stage/$item" || exit 1
     done
     verify "$stage" "$remote" || exit 1
+    # 两个持久版本槽。新包校验完成后才回收过期槽，始终保留当前版本。
+    for candidate in "$HEAD_CAM_HOME"/releases/*; do
+        [ -d "$candidate" ] && [ ! -L "$candidate" ] || continue
+        valid_version "${candidate##*/}" || continue
+        [ "$candidate" = "$old" ] || [ "${candidate##*/}" = "$remote" ] || rm -rf "$candidate"
+    done
+    if [ "$old" != "$HEAD_CAM_HOME" ] && [ -x "$HEAD_CAM_HOME/head-cam-service" ]; then
+        rm -f "$HEAD_CAM_HOME/head-cam-service"
+    fi
     if [ -e "$HEAD_CAM_HOME/releases/$remote" ]; then
         verify "$HEAD_CAM_HOME/releases/$remote" "$remote" || exit 1
     else
-        sync; mv "$stage" "$HEAD_CAM_HOME/releases/$remote" || exit 1
+        rm -rf "$incoming"
+        required=$( "$BB" du -sk "$stage" | "$BB" awk '{print $1+128}' )
+        available=$( "$BB" df -Pk "$HEAD_CAM_HOME" | "$BB" awk 'END {print $4}' )
+        if [ -z "$available" ] || [ "$available" -lt "$required" ]; then
+            log "Insufficient flash space for new version: need ${required} KiB, available ${available:-unknown}"
+            exit 1
+        fi
+        cp -R "$stage" "$incoming" || exit 1
+        sync
+        mv "$incoming" "$HEAD_CAM_HOME/releases/$remote" || exit 1
     fi
-    ln -sfn "releases/$current" "$HEAD_CAM_HOME/previous" || exit 1
+    previous_target=releases/$current
+    [ "$old" != "$HEAD_CAM_HOME" ] || previous_target=.
+    ln -sfn "$previous_target" "$HEAD_CAM_HOME/previous" || exit 1
     switch_to "$remote" || exit 1
     sync
-    count=0
-    for version in $(find "$HEAD_CAM_HOME/releases" -mindepth 1 -maxdepth 1 -type d | sed 's#.*/##' | sort -r); do
-        valid_version "$version" || continue
-        [ "$version" != "$remote" ] || continue
-        count=$((count+1))
-        if [ "$count" -gt "$BACKUP_KEEP" ]; then rm -rf "$HEAD_CAM_HOME/releases/$version";fi
-    done
     log "Updated to $remote"
 )
 watch_gateway() (
@@ -132,12 +150,14 @@ run_service() {
     trap 'kill "$delay_pid" 2>/dev/null || true; exit 0' 2 15
     wait "$delay_pid" || true
     trap - 2 15
-    timeout 300 /bin/sh "$HEAD_CAM_HOME/boot_autostart.sh" update-internal || log 'Update failed; using local release'
+    bounded 300 /bin/sh "$HEAD_CAM_HOME/boot_autostart.sh" update-internal || log 'Update failed; using local release'
     release=$(active)
-    if ! timeout 10 "$release/head-cam-service" --self-check >/dev/null 2>&1; then
+    if ! bounded 10 "$release/head-cam-service" --self-check >/dev/null 2>&1; then
         previous=$(readlink -f "$HEAD_CAM_HOME/previous")
         [ -x "$previous/head-cam-service" ] || return 1
-        switch_to "${previous##*/}";release=$previous
+        if [ "$previous" = "$HEAD_CAM_HOME" ];then rm -f "$HEAD_CAM_HOME/current"
+        else switch_to "${previous##*/}";fi
+        release=$previous
     fi
     printf '%s\n' "$$" > "$HEAD_CAM_HOME/runtime/service.pid"
     HEAD_CAM_MONITOR_CONFIG=$HEAD_CAM_HOME/monitor.json
@@ -183,7 +203,12 @@ stop_service() {
     fi
     # 验证 PID 对应服务二进制，避免 PID 复用误杀。
     exe=$(readlink "/proc/$pid/exe" 2>/dev/null || true)
-    case "$exe" in "$HEAD_CAM_HOME"/head-cam-service|"$HEAD_CAM_HOME"/releases/*/head-cam-service) ;; *) grep -F "$HEAD_CAM_HOME/boot_autostart.sh" "/proc/$pid/cmdline" >/dev/null 2>&1 || { log 'No matching service';return 1; };; esac
+    case "$exe" in
+        "$HEAD_CAM_HOME"/head-cam-service|"$HEAD_CAM_HOME"/releases/*/head-cam-service) ;;
+        /tmp/head-cam-core-*/head-cam-service)
+            "$BB" tr '\000' '\n' < "/proc/$pid/cmdline" | grep -Fx "$HEAD_CAM_HOME/runtime/supervisor.lock" >/dev/null || { log 'No matching service';return 1; };;
+        *) grep -F "$HEAD_CAM_HOME/boot_autostart.sh" "/proc/$pid/cmdline" >/dev/null 2>&1 || { log 'No matching service';return 1; };;
+    esac
     kill -TERM "$pid" 2>/dev/null || true
     n=0;while kill -0 "$pid" 2>/dev/null; do
         [ "$n" -lt 20 ] || { log 'Still stopping; wait for accepted uploads';return 1; }

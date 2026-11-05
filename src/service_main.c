@@ -62,7 +62,10 @@ int main(int argc,char **argv) {
     char exe[PATH_MAX],path[PATH_MAX],error[ERROR_SIZE]={0};
     ssize_t len=readlink("/proc/self/exe",exe,sizeof(exe)-1);
     if(len<0 || len>=(ssize_t)sizeof(exe)-1) { fprintf(stderr,"Cannot locate executable\n"); return 1; }
-    exe[len]=0; char *slash=strrchr(exe,'/'); if(!slash) return 1; *slash=0;
+    exe[len]=0;
+    const char *packed=getenv("HEAD_CAM_PACKED_EXE");
+    if(packed && *packed=='/' && strlen(packed)<sizeof(exe)) strcpy(exe,packed);
+    char *slash=strrchr(exe,'/'); if(!slash) return 1; *slash=0;
     int updating=update_list || update_get;
     if(updating) settings.process_timeout=120;
     if(self_check || updating) {
