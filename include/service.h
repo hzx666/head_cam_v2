@@ -68,5 +68,10 @@ int tasks_start(task_manager *manager, char *error);
 void tasks_close(task_manager *manager);
 cJSON *task_submit_files(task_manager *manager, const char *path, const cJSON *files, int delete_after_upload, int *http_status);
 cJSON *task_get(task_manager *manager, const char *id, int *http_status);
+void task_refresh_file_identity(task_manager *manager, const char *task_id,
+                                const char *path, const char *old_id, const char *new_id);
+int file_delete_blocked(task_manager *manager, const char *path);
+int deleted_history_prune(task_manager *manager);
+cJSON *file_delete(task_manager *manager, const cJSON *body, int *http_status);
 int http_serve(task_manager *manager, const char *host, unsigned port, const char *token);
 #endif

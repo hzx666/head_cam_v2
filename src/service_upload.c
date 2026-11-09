@@ -104,6 +104,7 @@ cJSON *process_file_progress(const char *path,const char *destination,int delete
     if(!realpath(fd_path,resolved) || strcmp(resolved,path)) { snprintf(error,ERROR_SIZE,"File location changed while opening"); goto done; }
     char file_id[67]; file_identity(path,&initial,file_id);
     js(result,"fileId",file_id);
+    json_number(result,"modifiedAt",(double)initial.st_mtim.tv_sec*1000+initial.st_mtim.tv_nsec/1000000);
     json_number(result,"size",(double)initial.st_size);
     if(progress) progress(context,"preparing",0,(uint64_t)initial.st_size,0);
     if(!initial.st_size) { js(result,"status","empty"); jb(result,"ok",1); goto done; }
@@ -156,19 +157,8 @@ cJSON *process_file_progress(const char *path,const char *destination,int delete
     if(metadata(destination,name,&id,&initial,duration,sha,remote,error)) goto done;
     jb(result,"upload_verified",1);
     if(!exists) json_number(result,"uploadedAt",epoch_ms());
-    if(delete_after_upload) {
-        /* Recheck after metadata; refuse a replaced path or changed inode. */
-        if(!realpath(path,resolved) || strcmp(resolved,path) ||
-           lstat(path,&after) || !same_file(&initial,&after)) {
-            snprintf(error,ERROR_SIZE,"Upload verified but local file changed before deletion; file retained");
-            goto done;
-        }
-        if(unlink(path)) {
-            snprintf(error,ERROR_SIZE,"Upload verified but local deletion failed: %s",strerror(errno));
-            goto done;
-        }
-        jb(result,"local_deleted",1);
-    }
+    /* The task manager persists the result before deleting the local file. */
+    (void)delete_after_upload;
     js(result,"status",exists?"skipped":"uploaded"); jb(result,"ok",1); error[0]=0;
 done:
     if(error[0]) js(result,"error",error);

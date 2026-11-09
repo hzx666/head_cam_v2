@@ -29,6 +29,189 @@ static int save(task_manager *m,task *t) {
     return 0;
 }
 static cJSON *failure(const char *message) { cJSON *j=cJSON_CreateObject(); jb(j,"accepted",0); js(j,"error",message); return j; }
+#define DELETED_HISTORY_LIMIT 1500
+#define DELETED_HISTORY_MS (48.0*3600*1000)
+typedef struct { task *owner; cJSON *item; double deleted; } deleted_record;
+static int newest_deleted_first(const void *left,const void *right) {
+    const deleted_record *a=left,*b=right;
+    if(a->deleted!=b->deleted) return a->deleted>b->deleted?-1:1;
+    int order=strcmp(str(a->item,"path"),str(b->item,"path"));
+    return order?order:strcmp(str(a->owner->json,"task_id"),str(b->owner->json,"task_id"));
+}
+static double record_deleted_at(const cJSON *item) {
+    const cJSON *value=cJSON_GetObjectItemCaseSensitive(item,"deletedAt");
+    if(cJSON_IsNumber(value)) return value->valuedouble;
+    value=cJSON_GetObjectItemCaseSensitive(item,"deletionPendingAt");
+    if(!cJSON_IsNumber(value)) return 0;
+    struct stat st;
+    return lstat(str(item,"path"),&st) && errno==ENOENT?value->valuedouble:0;
+}
+/* Mutex held. Remove actual JSON objects, rather than just limiting the response. */
+static int prune_deleted_locked(task_manager *manager) {
+    size_t count=0;
+    for(task *t=manager->first;t;t=t->next) {
+        cJSON *item;
+        cJSON_ArrayForEach(item,cJSON_GetObjectItemCaseSensitive(t->json,"results"))
+            if(record_deleted_at(item)>0) count++;
+    }
+    if(!count) return 0;
+    deleted_record *records=calloc(count,sizeof(*records));
+    if(!records) return -1;
+    size_t used=0;
+    for(task *t=manager->first;t;t=t->next) {
+        cJSON *item;
+        cJSON_ArrayForEach(item,cJSON_GetObjectItemCaseSensitive(t->json,"results")) {
+            double deleted=record_deleted_at(item);
+            if(deleted>0) records[used++]=(deleted_record){t,item,deleted};
+        }
+    }
+    qsort(records,count,sizeof(*records),newest_deleted_first);
+    double now=epoch_ms(); int rc=0;
+    for(size_t i=0;i<count;i++) {
+        if(i<DELETED_HISTORY_LIMIT && now-records[i].deleted<DELETED_HISTORY_MS) continue;
+        cJSON *results=cJSON_GetObjectItemCaseSensitive(records[i].owner->json,"results");
+        cJSON_Delete(cJSON_DetachItemViaPointer(results,records[i].item));
+    }
+    /* Save each affected task once, preserving its original summary counters. */
+    for(task *t=manager->first;t;t=t->next) {
+        int changed=0;
+        for(size_t i=0;i<count;i++) if(records[i].owner==t &&
+            (i>=DELETED_HISTORY_LIMIT || now-records[i].deleted>=DELETED_HISTORY_MS)) { changed=1; break; }
+        if(changed && save(manager,t)) rc=-1;
+    }
+    free(records); return rc;
+}
+int deleted_history_prune(task_manager *manager) {
+    pthread_mutex_lock(&manager->mutex);
+    int rc=prune_deleted_locked(manager);
+    pthread_mutex_unlock(&manager->mutex);
+    return rc;
+}
+/* Mutex held. Save intent before unlink so a power loss can be recovered. */
+static int delete_recorded(task_manager *manager,task *owner,cJSON *result,
+                           int directory,const char *name,const char *id,const struct stat *st) {
+    if(result) {
+        json_number(result,"modifiedAt",(double)st->st_mtim.tv_sec*1000+st->st_mtim.tv_nsec/1000000);
+        json_number(result,"deletionPendingAt",epoch_ms());
+        if(save(manager,owner)) return -1;
+    }
+    struct stat current; char actual[67];
+    int rc=fstatat(directory,name,&current,AT_SYMLINK_NOFOLLOW);
+    if(!rc) {
+        file_identity(str(result,"path"),&current,actual);
+        if(!S_ISREG(current.st_mode) || !same_file(st,&current) ||
+           (result && strcmp(actual,id))) { errno=ESTALE; rc=-1; }
+        else rc=unlinkat(directory,name,0);
+    }
+    if(result) {
+        if(!rc) {
+            json_number(result,"deletedAt",epoch_ms()); jb(result,"local_deleted",1);
+        }
+        cJSON_DeleteItemFromObjectCaseSensitive(result,"deletionPendingAt");
+        if(save(manager,owner)) return -1;
+    }
+    return rc;
+}
+void task_refresh_file_identity(task_manager *manager,const char *task_id,
+                                const char *path,const char *old_id,const char *new_id) {
+    pthread_mutex_lock(&manager->mutex);
+    for(task *t=manager->first;t;t=t->next) {
+        if(strcmp(str(t->json,"task_id"),task_id)) continue;
+        cJSON *item;
+        cJSON_ArrayForEach(item,cJSON_GetObjectItemCaseSensitive(t->json,"results")) {
+            if(!strcmp(str(item,"path"),path) && !strcmp(str(item,"fileId"),old_id)) {
+                js(item,"fileId",new_id);
+            }
+        }
+        /* The task snapshot remains the source of truth across process restarts. */
+        save(manager,t);
+        break;
+    }
+    pthread_mutex_unlock(&manager->mutex);
+}
+/* Caller holds the manager mutex, also used when accepting new upload tasks. */
+static int file_busy_locked(task_manager *manager,const char *path) {
+    for(task *t=manager->first;t;t=t->next) {
+        if(!active(str(t->json,"status"))) continue;
+        const char *root=str(t->json,"path");
+        if(!path_inside(path,root)) continue;
+        const cJSON *files=cJSON_GetObjectItemCaseSensitive(t->json,"files");
+        if(!files) return 1;
+        const cJSON *entry;
+        cJSON_ArrayForEach(entry,files) {
+            char full[PATH_MAX];
+            if(!path_join(full,sizeof(full),root,entry->valuestring) && !strcmp(path,full)) return 1;
+        }
+    }
+    return 0;
+}
+int file_delete_blocked(task_manager *manager,const char *path) {
+    pthread_mutex_lock(&manager->mutex);
+    int blocked=file_busy_locked(manager,path);
+    pthread_mutex_unlock(&manager->mutex);
+    return blocked;
+}
+static cJSON *delete_error(int *status,int code,const char *reason,const char *message) {
+    *status=code;
+    cJSON *out=cJSON_CreateObject();
+    jb(out,"deleted",0); js(out,"errorCode",reason); js(out,"errorMessage",message);
+    return out;
+}
+cJSON *file_delete(task_manager *manager,const cJSON *body,int *status) {
+    const char *raw=str(body,"path"),*name=str(body,"name"),*expected=str(body,"fileId");
+    size_t length=strlen(name);
+    if(!cJSON_IsObject(body) || cJSON_GetArraySize(body)!=3 || raw[0]!='/' ||
+       length<5 || strcasecmp(name+length-5,".mcap") || strchr(name,'/') || strchr(name,'\\') ||
+       strlen(expected)!=66 || strncmp(expected,"f_",2) || strspn(expected+2,"0123456789abcdef")!=64)
+        return delete_error(status,400,"INVALID_REQUEST","Expected path, MCAP name and fileId");
+    char path[PATH_MAX],full[PATH_MAX];
+    if(!realpath(raw,path)) return delete_error(status,404,"NOT_FOUND","Directory does not exist");
+    if((settings.allowed_root[0] && !path_inside(path,settings.allowed_root)) || path_inside(path,settings.runtime))
+        return delete_error(status,403,"RESTRICTED_PATH","Directory is outside the permitted scope");
+    if(path_join(full,sizeof(full),path,name)) return delete_error(status,400,"INVALID_REQUEST","Path is too long");
+    int dir=open(path,O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+    if(dir<0) return delete_error(status,403,"DELETE_FAILED","Cannot open directory");
+    char fd_path[64],resolved[PATH_MAX];
+    snprintf(fd_path,sizeof(fd_path),"/proc/self/fd/%d",dir);
+    if(!realpath(fd_path,resolved) || strcmp(path,resolved)) {
+        close(dir); return delete_error(status,409,"FILE_CHANGED","Directory changed; refresh file list");
+    }
+    pthread_mutex_lock(&manager->mutex);
+    cJSON *out; struct stat st; char actual[67];
+    if(file_busy_locked(manager,full)) out=delete_error(status,409,"ACTIVE_UPLOAD_TASK","File belongs to an active upload task");
+    else if(fstatat(dir,name,&st,AT_SYMLINK_NOFOLLOW)) {
+        out=delete_error(status,errno==ENOENT?404:403,errno==ENOENT?"NOT_FOUND":"DELETE_FAILED","Cannot access file");
+    } else if(!S_ISREG(st.st_mode)) out=delete_error(status,400,"INVALID_FILE","Only regular MCAP files can be deleted");
+    else {
+        file_identity(full,&st,actual);
+        if(strcmp(actual,expected)) out=delete_error(status,409,"FILE_CHANGED","File changed; refresh file list");
+        else {
+            task *owner=NULL; cJSON *record=NULL;
+            for(task *t=manager->first;t;t=t->next) {
+                cJSON *item;
+                cJSON_ArrayForEach(item,cJSON_GetObjectItemCaseSensitive(t->json,"results")) {
+                    if(!strcmp(full,str(item,"path")) && !strcmp(actual,str(item,"fileId")) &&
+                       (cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(item,"upload_verified")) ||
+                        (cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(item,"ok")) &&
+                         cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(item,"same_content")) &&
+                         !strcmp(str(item,"checksum_status"),"match") &&
+                         (!strcmp(str(item,"status"),"uploaded") || !strcmp(str(item,"status"),"skipped"))))) {
+                        if(!record || num(item,"updatedAt")>num(record,"updatedAt")) { owner=t; record=item; }
+                    }
+                }
+            }
+            if(delete_recorded(manager,owner,record,dir,name,actual,&st))
+                out=delete_error(status,503,"DELETE_FAILED","Cannot persist deletion or delete local file; refresh list");
+            else {
+                *status=200; out=cJSON_CreateObject(); jb(out,"deleted",1);
+                js(out,"fileId",actual); js(out,"name",name); js(out,"path",full);
+            }
+        }
+    }
+    if(prune_deleted_locked(manager)) fprintf(stderr,"Cannot prune deleted file history\n");
+    pthread_mutex_unlock(&manager->mutex);
+    close(dir); return out;
+}
 cJSON *task_get(task_manager *m,const char *id,int *status) {
     pthread_mutex_lock(&m->mutex); cJSON *out=NULL;
     for(task *t=m->first;t;t=t->next) if(!strcmp(str(t->json,"task_id"),id)) { out=cJSON_Duplicate(t->json,1); break; }
@@ -305,7 +488,32 @@ static void execute(task_manager *m,task *t) {
         json_number(t->json,"progress_percent",percent>=100?99.9:percent);
         json_number(t->json,status,num(t->json,status)+1); json_number(t->json,"processed",num(t->json,"processed")+1);
         cJSON_AddItemToArray(cJSON_GetObjectItemCaseSensitive(t->json,"results"),result);
-        rc=save(m,t); pthread_mutex_unlock(&m->mutex);
+        if(cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(t->json,"delete_after_upload")) &&
+           cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(result,"upload_verified"))) {
+            char directory[PATH_MAX]; snprintf(directory,sizeof(directory),"%s",item->path);
+            char *name=strrchr(directory,'/'); *name++=0;
+            int dir=open(*directory?directory:"/",O_RDONLY|O_DIRECTORY|O_NOFOLLOW|O_CLOEXEC);
+            struct stat st; char id[67]; int deleted=0;
+            char fd_path[64],resolved[PATH_MAX];
+            snprintf(fd_path,sizeof(fd_path),"/proc/self/fd/%d",dir);
+            if(dir>=0 && realpath(fd_path,resolved) && !strcmp(resolved,*directory?directory:"/") &&
+               !fstatat(dir,name,&st,AT_SYMLINK_NOFOLLOW) && S_ISREG(st.st_mode)) {
+                file_identity(item->path,&st,id);
+                if(!strcmp(id,str(result,"fileId")))
+                    deleted=!delete_recorded(m,t,result,dir,name,id,&st);
+            }
+            if(dir>=0) close(dir);
+            if(!deleted) {
+                json_number(t->json,status,num(t->json,status)-1);
+                json_number(t->json,"failed",num(t->json,"failed")+1);
+                js(result,"status","failed"); jb(result,"ok",0);
+                js(result,"error","Upload verified but local deletion failed; refresh file list");
+                js(current,"phase","failed");
+            }
+        }
+        rc=save(m,t);
+        if(!rc) rc=prune_deleted_locked(m);
+        pthread_mutex_unlock(&m->mutex);
         if(rc) break;
     }
     pthread_mutex_lock(&m->mutex);
@@ -359,8 +567,11 @@ int tasks_start(task_manager *m,char *error) {
             if(current) json_number(current,"speed_bytes_per_second",0);
             if(save(m,t)) { closedir(dir); goto bad; }
         }
+        /* Bound retained history while loading, rather than after loading all tasks. */
+        if(prune_deleted_locked(m)) { closedir(dir); goto bad; }
     }
     closedir(dir);
+    if(prune_deleted_locked(m)) goto bad;
     if(pthread_create(&m->worker,NULL,worker,m)) goto bad;
     return 0;
 bad:

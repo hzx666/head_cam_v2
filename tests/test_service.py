@@ -177,11 +177,144 @@ class ServiceTests(unittest.TestCase):
         self.assertTrue(first['canUpload'])
         self.assertEqual(self.wait(self.submit())['skipped'], 1)
         self.stop()
+        # A remount can change inode/device identity while preserving file content.
+        replacement = file.with_suffix('.replacement')
+        replacement.write_bytes(file.read_bytes())
+        replacement.replace(file)
         self.start()
         self.assertEqual(listing('UPLOADED')['files'][0]['uploadedAt'], first['uploadedAt'])
+        recovered = listing('UPLOADED')['files'][0]
+        self.assertNotEqual(recovered['fileId'], original['fileId'])
+        self.stop()
+        self.start()
+        self.assertEqual(listing('UPLOADED')['files'][0]['fileId'], recovered['fileId'])
         file.write_bytes(mcap(delta=3_000_000_000))
         self.assertEqual(listing('UPLOADED')['total'], 0)
         self.assertNotEqual(listing('NOT_UPLOADED')['files'][0]['fileId'], original['fileId'])
+
+    def test_deleted_upload_history_48_hours(self):
+        def listing(state='UPLOADED', offset=0):
+            code, data = self.request('GET', '/files?' + urlencode(dict(path=str(self.data), upload_state=state, offset=offset)))
+            self.assertEqual(code, 200, data)
+            return data
+
+        file = self.file()
+        size = file.stat().st_size
+        _, task = self.request('POST', '/upload', dict(path=str(self.data), delete_after_upload=True))
+        self.assertEqual(self.wait(task)['status'], 'completed')
+        self.assertFalse(file.exists())
+        data = listing()
+        self.assertEqual(data['total'], 1)
+        self.assertEqual(data['total_bytes'], size)
+        self.assertEqual(data['local_bytes'], 0)
+        item = data['files'][0]
+        self.assertEqual(item['localState'], 'DELETED')
+        self.assertGreater(item['deletedAt'], 0)
+        self.assertEqual(item['durationMs'], 2500)
+        self.assertFalse(item['canUpload'])
+        self.assertFalse(item['canDelete'])
+        self.assertEqual(item['blockedReason'], 'LOCAL_FILE_DELETED')
+        self.assertEqual(listing('NOT_UPLOADED')['total'], 0)
+        self.assertEqual(listing(offset=200)['files'], [])
+        self.stop()
+        self.start()
+        self.assertEqual(listing()['files'][0]['deletedAt'], item['deletedAt'])
+        # Recover an interruption after unlink but before the final task save.
+        self.stop()
+        task_path = self.runtime / 'tasks' / (task['task_id'] + '.json')
+        saved = json.loads(task_path.read_text())
+        saved['results'][0]['deletionPendingAt'] = saved['results'][0].pop('deletedAt')
+        task_path.write_text(json.dumps(saved))
+        self.start()
+        self.assertEqual(listing()['files'][0]['localState'], 'DELETED')
+
+        # A same-name replacement appears once and cannot inherit deletion state.
+        self.file(content=mcap(delta=3_000_000_000))
+        self.assertEqual(listing()['total'], 0)
+        self.assertEqual(listing('NOT_UPLOADED')['files'][0]['localState'], 'PRESENT')
+        file.unlink()
+        self.stop()
+        task_path = self.runtime / 'tasks' / (task['task_id'] + '.json')
+        saved = json.loads(task_path.read_text())
+        saved['results'][0]['deletedAt'] = time.time() * 1000 - 48 * 3600 * 1000 - 1
+        saved['results'][0].pop('deletionPendingAt', None)
+        task_path.write_text(json.dumps(saved))
+        self.start()
+        self.assertEqual(listing()['total'], 0)
+
+        # Manual deletion has the same retained history as automatic deletion.
+        file = self.file('SSIEGO_Cam_OTHER_20261105_001.mcap')
+        self.wait(self.submit())
+        present = listing()['files'][0]
+        body = dict(path=str(self.data), name=file.name, fileId=present['fileId'])
+        self.assertEqual(self.request('POST', '/files/delete', body)[0], 200)
+        self.assertEqual(listing()['files'][0]['localState'], 'DELETED')
+        self.stop()
+        self.start()
+        self.assertEqual(listing()['files'][0]['localState'], 'DELETED')
+
+    def test_deleted_history_global_limit(self):
+        file = self.file()
+        _, task = self.request('POST', '/upload', dict(path=str(self.data), delete_after_upload=True))
+        self.assertEqual(self.wait(task)['status'], 'completed')
+        self.stop()
+        task_path = self.runtime / 'tasks' / (task['task_id'] + '.json')
+        saved = json.loads(task_path.read_text())
+        template = saved['results'][0]
+        records = []
+        now = time.time() * 1000
+        for i in range(1501):
+            record = dict(template, file=f'capture_{i:04d}.mcap', path=str(self.data / f'capture_{i:04d}.mcap'),
+                          deletedAt=now - 2000 + i, fileId='f_' + f'{i:064x}')
+            records.append(record)
+        saved['results'] = records
+        task_path.write_text(json.dumps(saved))
+        self.start()
+        _, data = self.request('GET', '/files?' + urlencode(dict(path=str(self.data), upload_state='UPLOADED')))
+        self.assertEqual(data['total'], 1500)
+        self.assertEqual(data['files'][0]['name'], 'capture_0001.mcap')
+        persisted = json.loads(task_path.read_text())
+        self.assertEqual(len(persisted['results']), 1500)
+        self.stop()
+        self.start()
+        self.assertEqual(len(self.request('GET', task['status_url'])[1]['results']), 1500)
+
+    def test_manual_file_deletion(self):
+        file = self.file('not_a_valid_capture.mcap')
+
+        def listing():
+            code, data = self.request('GET', '/files?' + urlencode(dict(path=str(self.data))))
+            self.assertEqual(code, 200)
+            return data['files'][0]
+
+        item = listing()
+        self.assertTrue(item['canDelete'])
+        body = dict(path=str(self.data), name=file.name, fileId=item['fileId'])
+        self.assertEqual(self.request('POST', '/files/delete', dict(body, name='../escape.mcap'))[0], 400)
+        file.write_bytes(b'replaced')
+        self.assertEqual(self.request('POST', '/files/delete', body)[0], 409)
+        self.assertTrue(file.exists())
+        body['fileId'] = listing()['fileId']
+        self.assertEqual(self.request('POST', '/files/delete', body)[0], 200)
+        self.assertFalse(file.exists())
+        self.assertEqual(self.request('POST', '/files/delete', body)[0], 404)
+
+        file = self.file()
+        self.rules(delay=.2)
+        task = self.submit()
+        item = listing()
+        body = dict(path=str(self.data), name=file.name, fileId=item['fileId'])
+        self.assertFalse(item['canDelete'])
+        code, response = self.request('POST', '/files/delete', body)
+        self.assertEqual(code, 409)
+        self.assertEqual(response['errorCode'], 'ACTIVE_UPLOAD_TASK')
+        self.assertTrue(file.exists())
+        self.wait(task)
+        self.assertTrue(listing()['canDelete'])
+        self.assertEqual(self.request('POST', '/files/delete', body)[0], 200)
+        self.assertFalse(file.exists())
+        self.assertEqual(len(self.records()), 1)
+        self.assertEqual(self.request('GET', task['status_url'])[1]['uploaded'], 1)
 
     def test_delete_after_upload(self):
         file = self.file()
