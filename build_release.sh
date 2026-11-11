@@ -46,6 +46,9 @@ python3 "$ROOT/scripts/pack_service.py" "$WORK/build/head-cam-service" "$WORK"
 "$LAUNCHER_CC" -static -Os -ffunction-sections -fdata-sections -Wl,--gc-sections -I"$WORK" \
     "$ROOT/src/packed_launcher.c" "$WORK/packed_payload.S" "${LZMA_ARGS[@]}" -o "$WORK/head-cam-service"
 "$STRIP" "$WORK/head-cam-service"
+release_version=$(tr -d '\r\n' < "$ROOT/SERVICE_VERSION")
+[[ $release_version =~ ^[0-9]{8}\.[0-9]{3}$ ]] || { echo 'Invalid SERVICE_VERSION' >&2; exit 1; }
+printf '\nHEAD_CAM_RELEASE=%s\n' "$release_version" >> "$WORK/head-cam-service"
 if [[ $(uname -m) == aarch64 && $ARCH == arm64 || $(uname -m) == x86_64 && $ARCH == x86_64 ]]; then
     "$WORK/head-cam-service" --self-check
 elif [[ -n ${QEMU_SELF_CHECK:-} ]]; then
@@ -57,33 +60,9 @@ if (( $(stat -c %s "$WORK/head-cam-service") + 50000 > 5000000 )); then
 fi
 mkdir -p "$ROOT/dist"
 install -m 700 "$WORK/head-cam-service" "$ROOT/dist/head-cam-service"
-# 清理旧交付组件，避免误用旧进程入口。
-rm -f "$ROOT/dist/head-cam-upload" "$ROOT/dist/head-cam-monitor" "$ROOT/dist/busybox"
-install -m 700 "$ROOT/scripts/boot_autostart.sh" "$ROOT/scripts/service_entry.sh" "$ROOT/scripts/run-upload" "$ROOT/scripts/run-monitor" "$ROOT/dist/"
-install -m 700 "$ROOT/scripts/manual_dhcp.sh" "$ROOT/dist/manual_dhcp.sh"
-install -m 600 "$ROOT/config/monitor.json" "$ROOT/dist/monitor.json"
-release_version=$(cat "$ROOT/SERVICE_VERSION")
-release_version=${release_version%$'\r'}
-if [[ ! $release_version =~ ^[0-9]{8}\.[0-9]{3}$ ]]; then
-    echo 'Invalid SERVICE_VERSION; expected YYYYMMDD.NNN' >&2
-    exit 1
-fi
-printf '%s\n' "$release_version" > "$ROOT/dist/SERVICE_VERSION"
-chmod 600 "$ROOT/dist/SERVICE_VERSION"
-(
-    cd "$ROOT/dist"
-    sha256sum head-cam-service service_entry.sh run-upload run-monitor boot_autostart.sh manual_dhcp.sh monitor.json SERVICE_VERSION > SHA256SUMS
-    {
-        echo "Target: Linux $ARCH; static C11 executable"
-        echo "Built: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
-        echo 'SERVICE_TESTING=OFF'
-        echo "Embedded ossutil SHA256: $(sha256sum "$OSSUTIL" | cut -d ' ' -f 1)"
-        echo "Embedded CA SHA256: $(sha256sum "${CA_BUNDLE:-/etc/ssl/certs/ca-certificates.crt}" | cut -d ' ' -f 1)"
-        echo 'Source references: cJSON v1.7.19 (MIT); target OpenSSL/LZ4/Zstd from Ubuntu packages'
-        if [[ $ARCH == arm64 ]]; then aarch64-linux-gnu-gcc --version | head -n 1; else gcc --version | head -n 1; fi
-    } > build-info.txt
-    if [[ $ARCH == arm64 && -f "$DEPS/package-sha256.txt" ]]; then
-        cat "$DEPS/package-sha256.txt" >> build-info.txt
-    fi
-)
-echo "Built unified service: $ROOT/dist (deploy the complete directory)."
+# Remove only known obsolete delivery files, never recursively clean dist.
+rm -f "$ROOT/dist/head-cam-upload" "$ROOT/dist/head-cam-monitor" "$ROOT/dist/busybox" \
+    "$ROOT/dist/boot_autostart.sh" "$ROOT/dist/service_entry.sh" "$ROOT/dist/run-upload" \
+    "$ROOT/dist/run-monitor" "$ROOT/dist/manual_dhcp.sh" "$ROOT/dist/monitor.json" \
+    "$ROOT/dist/SERVICE_VERSION" "$ROOT/dist/SHA256SUMS" "$ROOT/dist/build-info.txt" "$ROOT/dist/部署说明.md"
+echo "Built single-file release: $ROOT/dist/head-cam-service ($release_version)."

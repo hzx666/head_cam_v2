@@ -7,7 +7,7 @@
 #include <sys/stat.h>
 
 #define ERROR_SIZE 512
-#define SERVICE_VERSION "1.0.0"
+#define SERVICE_VERSION MONITOR_RELEASE_VERSION
 #define MAX_FILES 10000
 
 typedef struct {
@@ -21,6 +21,8 @@ typedef struct {
 } service_config;
 
 extern service_config settings;
+int lifecycle_main(const char *command);
+cJSON *monitor_defaults(void);
 int path_join(char *out, size_t cap, const char *a, const char *b);
 int path_inside(const char *path, const char *root);
 int write_all(int fd, const void *data, size_t size);

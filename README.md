@@ -1,6 +1,18 @@
 # 头环 MCAP 上传服务（C / ARM64 Linux）
 
-服务使用单二进制 head-cam-service，上传、监控由守护进程独立管理。设备部署与开机自启见 [BUSYBOX_DEPLOY.md](BUSYBOX_DEPLOY.md)，监控协议见 [统一服务说明](docs/UNIFIED_SERVICE.md)。
+发布目录只需一个 `head-cam-service`，内置监控默认配置、版本、构建信息、部署和更新工具。上传、监控由守护进程独立管理。
+
+首次部署（root，在设备最终安装目录执行）：
+
+```sh
+chmod 700 head-cam-service
+./head-cam-service install
+```
+
+安装后自动启动并在设备的 `/config/diy.sh` 注册开机自启。日常管理使用 `./head-cam-service` 的 `restart`、`stop`、`start`、`status` 子命令。手动恢复默认网关可运行 `./head-cam-service dhcp`。
+自更新默认关闭，安装、开机和重启不检查远端更新；手动更新先 stop，再 update，最后 start。
+查询当前文件版本：`./head-cam-service --version`；查询后台运行版本：`./head-cam-service status`；构建详情：`./head-cam-service --build-info`。
+当前内置设备标识为 `head_cam_v2_test`，后续接入固件 SN 接口后再取最后四位。
 
 手机 App 浏览头环目录、选择目录后提交任务。C 服务递归扫描 MCAP，解析头环文件名，校验 SHA256，上传 OSS 并写入 metadata。接口和任务管理参考 teleop，头环命名及 metadata 参考 develop 的 head_cam。
 
@@ -8,7 +20,7 @@
 
 ## 单独启动上传组件
 
-运行产物是 `dist/head-cam-service`，一个 ARM64 Linux 静态可执行文件，内嵌 ossutil、CA 证书与加密凭证。设备无需 Python、额外 ossutil 或明文 AK/SK 配置。`SHA256SUMS`、`build-info.txt` 是校验和构建说明，不是运行依赖。
+运行产物是 `dist/head-cam-service`，一个 ARM64 Linux 静态可执行文件，内嵌 ossutil、CA 证书与加密凭证。设备无需 Python、额外 ossutil 或明文 AK/SK 配置；不再发布独立 JSON、版本、校验清单或脚本。
 
 ```sh
 cd /mnt/config/oss_upload
@@ -27,7 +39,7 @@ chmod 700 head-cam-service
 
 ## App 接口
 
-App 开发接入流程、页面状态、轮询恢复和联调验收见 [docs/APP_INTEGRATION.md](docs/APP_INTEGRATION.md)。详细请求、响应及目录选择流程见 [docs/API.md](docs/API.md)。
+App 保存提交返回的任务 ID，页面恢复后可继续轮询对应任务。
 
 | 接口 | 用途 |
 | --- | --- |
@@ -37,12 +49,13 @@ App 开发接入流程、页面状态、轮询恢复和联调验收见 [docs/APP
 | `GET /files?path=...&offset=0` | 列出当前目录完整 MCAP 文件，每页最多 200 项 |
 | `POST /upload` | 提交 `{"path":"/mnt/sd/sd0/采集目录"}` |
 | `GET /upload/{task_id}` | 查询进度和逐文件结果 |
+| `POST /files/delete` | 删除单个本地 MCAP，提交目录 `path`、文件名 `name` 和列表返回的 `fileId` |
 
 App 点击目录进入下一层，点击“上传当前目录”时提交返回的 path，无需用户输入路径。路径属于头环，不是手机。仓库提供设备接口，App 页面需在 App 工程中接入。
 
 POST 立即返回任务 ID，后台逐个上传；`accepted=true` 不表示上传完成。提交 TF 卡根目录递归处理卡内数据，提交子目录只处理该目录。无终端输入或 YES 确认。
 
-目录内单选或多选文件：POST `/upload` 提交 `{"path":"/mnt/sd/sd0/采集目录","files":["文件1.mcap","文件2.mcap"]}`。只处理选中的当前层文件，不递归；files 限 1–100 个不重复名称，请求总大小仍最多 16 KiB。App 用 `/files` 展示文件并勾选，切换目录清空勾选。完整规则见 [docs/API.md](docs/API.md)。
+目录内单选或多选文件：POST `/upload` 提交 `{"path":"/mnt/sd/sd0/采集目录","files":["文件1.mcap","文件2.mcap"]}`。只处理选中的当前层文件，不递归；files 限 1–100 个不重复名称，请求总大小仍最多 16 KiB。App 用 `/files` 展示文件并勾选，切换目录清空勾选。添加 `upload_state=UPLOADED` 可筛选已上传且仍在设备上的文件。
 
 ## 文件和业务规则
 
@@ -84,7 +97,7 @@ POST 立即返回任务 ID，后台逐个上传；`accepted=true` 不表示上�
 
 状态：`queued/scanning/uploading` 为处理中；`completed/partial_failed/failed/no_data/interrupted` 为终态。completed 可能包含空文件或内容未知的 skipped，应展示逐文件结果。
 
-任务查询提供整批及 current_file 的 progress_percent、bytes_total、bytes_uploaded 等字节进度字段，以及解析、传输、校验和 metadata 阶段。App 使用百分比字段更新进度条，处理时最多 99.9%，completed 才显示 100%。processed/total 仍为文件计数。字段语义及跳过/失败处理见 [docs/API.md](docs/API.md#实时字节进度新版)。
+任务查询提供整批及 current_file 的 progress_percent、bytes_total、bytes_uploaded 等字节进度字段，以及解析、传输、校验和 metadata 阶段。App 使用百分比字段更新进度条，处理时最多 99.9%，completed 才显示 100%。processed/total 为文件计数。
 
 `runtime/tasks/` 保存任务 JSON，`runtime/logs/` 保存日志。状态通过临时文件、fsync 和原子重命名落盘；保存失败后拒绝新任务。历史不自动清理。
 
@@ -94,9 +107,21 @@ POST 立即返回任务 ID，后台逐个上传；`accepted=true` 不表示上�
 
 ## 打包与离线验证
 
-构建说明见 [docs/BUILD.md](docs/BUILD.md)。成品加密内嵌凭证，运行时在私有 `runtime/session-*` 释放 `0600` 凭证配置，正常退出清理，异常残留下次启动时清理。AK/SK 不传入进程参数、不输出到接口或日志。二进制含解密材料，设备被控制后仍可能提取密钥。
+在 Linux 或 WSL Ubuntu 22.04 准备构建环境并生成 ARM64 成品。
 
-MCAP 格式依据 [MCAP Specification](https://mcap.dev/spec)，metadata CLI 依据 [ossutil set-meta](https://www.alibabacloud.com/help/en/oss/developer-reference/set-meta)。第三方来源见 [third_party/README.md](third_party/README.md)。
+```sh
+sudo apt-get update
+sudo apt-get install -y cmake build-essential gcc-aarch64-linux-gnu \
+  libssl-dev liblz4-dev libzstd-dev python3 python3-cryptography qemu-user
+bash scripts/prepare_arm64.sh
+CREDENTIALS_SOURCE=/mnt/d/real-device-upload-teleop/upload_core.py bash build_release.sh
+```
+
+已有 `.deps/arm64` 时可直接运行最后一条命令。也可用 `CREDENTIALS_JSON` 指向私有凭证配置。默认使用仓库内的 ARM64 ossutil v1.7.19，可用 `OSSUTIL_BIN` 和 `CA_BUNDLE` 指定替代输入。生成后可运行 `python3 tests/smoke_release.py dist/head-cam-service --qemu` 离线验证。Windows 可用 `./scripts/publish_oss_release.ps1` 预览，显式加 `-Upload` 才发布。
+
+成品加密内嵌凭证，运行时在私有 `runtime/session-*` 释放 `0600` 凭证配置，正常退出清理，异常残留下次启动时清理。AK/SK 不传入进程参数、不输出到接口或日志。二进制含解密材料，设备被控制后仍可能提取密钥。
+
+第三方依赖包括 cJSON v1.7.19、OpenSSL、LZ4、Zstandard、glibc、BusyBox 和 ossutil。仓库保留 cJSON 的 MIT 许可证，Ubuntu 依赖许可证随解包文件保存在 `.deps/arm64/usr/share/doc/`。 [cJSON 许可证](third_party/cjson/LICENSE) · [ossutil](https://github.com/aliyun/ossutil) · [MCAP 格式](https://mcap.dev/spec)
 
 
 ### 上传成功后删除本地文件

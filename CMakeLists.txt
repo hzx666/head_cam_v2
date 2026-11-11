@@ -12,11 +12,18 @@ set(BUNDLE_DIR "" CACHE PATH "Private output directory from embed_bundle.py")
 set(SERVICE_DEPS "" CACHE PATH "Extracted target development libraries")
 find_package(Threads REQUIRED)
 add_executable(head-cam-service
-    src/unified_main.c src/service_supervisor.c src/monitor_main.c src/monitor_scan.c src/monitor_mqtt.c
+    src/unified_main.c src/service_lifecycle.c src/service_supervisor.c src/monitor_main.c src/monitor_scan.c src/monitor_mqtt.c
     src/service_main.c src/service_util.c src/service_bundle.c
     src/service_upload.c src/service_tasks.c src/service_http.c
     src/head_mcap.c src/tf_scan.c third_party/cjson/cJSON.c)
 target_include_directories(head-cam-service PRIVATE include third_party)
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/lifecycle_data.h"
+    COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/embed_lifecycle.py" "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/lifecycle_data.h"
+    DEPENDS scripts/embed_lifecycle.py scripts/boot_autostart.sh scripts/manual_dhcp.sh config/monitor.json
+    VERBATIM)
+target_sources(head-cam-service PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/lifecycle_data.h")
+target_include_directories(head-cam-service PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
 target_compile_definitions(head-cam-service PRIVATE _GNU_SOURCE _FILE_OFFSET_BITS=64 CJSON_NESTING_LIMIT=64)
 target_compile_options(head-cam-service PRIVATE -Wall -Wextra -Wpedantic -Wshadow -Wformat=2 -Werror=return-type)
 if(SERVICE_TESTING)

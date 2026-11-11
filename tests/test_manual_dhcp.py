@@ -44,7 +44,7 @@ class DHCPTest(unittest.TestCase):
             body=(ROOT/'scripts/boot_autostart.sh').read_text().split('watch_gateway() (',1)[1].split('\nrun_service()',1)[0]
             script=root/'watch.sh'
             script.write_text('log() { :; }\nwatch_gateway() ('+body+'\nwatch_gateway "$$"\n')
-            env=dict(os.environ,BB=str(tool),HEAD_CAM_HOME=str(root),HEAD_CAM_NETWORK_IFACE='wlan0',TEST_ROUTER='192.168.20.1',TEST_LOG=str(log))
+            env=dict(os.environ,BB=str(tool),HEAD_CAM_HOME=str(root),HEAD_CAM_INTERNAL_DIR=str(root),HEAD_CAM_NETWORK_IFACE='wlan0',TEST_ROUTER='192.168.20.1',TEST_LOG=str(log))
             process=subprocess.Popen(['/usr/bin/busybox','sh',str(script)],env=env,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
             try:
                 for attempt in range(2):

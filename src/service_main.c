@@ -1,5 +1,6 @@
 #include "service.h"
 #include <dirent.h>
+#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <openssl/crypto.h>
@@ -34,7 +35,7 @@ int main(int argc,char **argv) {
     if(!OPENSSL_init_crypto(OPENSSL_INIT_NO_LOAD_CONFIG,NULL)) return 1;
     const char *host="0.0.0.0",*runtime=NULL,*root=NULL,*config=NULL,*ossutil=NULL;
     unsigned port=38127; int self_check=0;
-    const char *update_list=NULL,*update_get=NULL,*update_output=NULL;
+    const char *update_list=NULL,*update_get=NULL,*update_output=NULL,*update_sha256=NULL;
     settings.process_timeout=1800;
     for(int i=1;i<argc;i++) {
         if(!strcmp(argv[i],"--help") || !strcmp(argv[i],"-h")) { usage(argv[0]); return 0; }
@@ -44,6 +45,7 @@ int main(int argc,char **argv) {
         if(!strcmp(option,"--host")) host=value;
         else if(!strcmp(option,"--update-list")) update_list=value;
         else if(!strcmp(option,"--update-get")) update_get=value;
+        else if(!strcmp(option,"--update-sha256")) update_sha256=value;
         else if(!strcmp(option,"--update-output")) update_output=value;
         else if(!strcmp(option,"--runtime-dir")) runtime=value;
         else if(!strcmp(option,"--allowed-root")) root=value;
@@ -66,7 +68,7 @@ int main(int argc,char **argv) {
     const char *packed=getenv("HEAD_CAM_PACKED_EXE");
     if(packed && *packed=='/' && strlen(packed)<sizeof(exe)) strcpy(exe,packed);
     char *slash=strrchr(exe,'/'); if(!slash) return 1; *slash=0;
-    int updating=update_list || update_get;
+    int updating=update_list || update_get || update_sha256;
     if(updating) settings.process_timeout=120;
     if(self_check || updating) {
         snprintf(path,sizeof(path),"/tmp/head-cam-selfcheck-XXXXXX");
@@ -87,15 +89,35 @@ int main(int argc,char **argv) {
     int rc=1;
     if(bundle_open(config,ossutil,error)) goto done;
     if(updating) {
-        const char *uri=update_list?update_list:update_get;
+        const char *uri=update_list?update_list:(update_get?update_get:update_sha256);
         const char *prefix="oss://ss-oss-data-platform/tools/device_monitor/head_cam_v2/";
         if(strncmp(uri,prefix,strlen(prefix)) || (update_get && (!update_output || update_output[0]!='/'))) {
             snprintf(error,sizeof(error),"Invalid update source or output"); goto done;
         }
         const char *list_args[]={"ls",uri,NULL};
         const char *get_args[]={"cp",uri,update_output,"-f",NULL};
+        const char *stat_args[]={"stat",uri,NULL};
         char *output=NULL;
-        rc=oss_run(update_list?list_args:get_args,&output,error);
+        rc=oss_run(update_list?list_args:(update_get?get_args:stat_args),&output,error);
+        if(!rc && update_sha256) {
+            rc=1;
+            char *state=NULL;
+            for(char *line=output?strtok_r(output,"\n",&state):NULL;line;line=strtok_r(NULL,"\n",&state)) {
+                while(isspace((unsigned char)*line))line++;
+                const char *key="x-oss-meta-sha256";size_t keylen=strlen(key);
+                if(strncasecmp(line,key,keylen))continue;
+                char *value=line+keylen;while(isspace((unsigned char)*value))value++;
+                if(*value++!=':')continue;
+                while(isspace((unsigned char)*value))value++;
+                size_t size=strcspn(value," \t\r\n");
+                if(size!=64)continue;
+                size_t i=0;for(;i<size;i++)if(!isxdigit((unsigned char)value[i]))break;
+                if(i!=64)continue;
+                for(i=0;i<64;i++)putchar(tolower((unsigned char)value[i]));
+                putchar('\n');rc=0;break;
+            }
+            if(rc)snprintf(error,sizeof(error),"Release SHA256 metadata missing or invalid");
+        }
         /* 仅输出匹配发布前缀的对象 URI，绝不透传 CLI 诊断或认证信息。 */
         if(!rc && update_list && output) {
             char *p=output;

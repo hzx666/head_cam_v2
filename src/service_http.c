@@ -323,8 +323,8 @@ static cJSON *browse(task_manager *manager,const char *query,int *status,int fil
             if(offset+200<matched) json_number(out,"next_offset",(double)(offset+200));
             else cJSON_AddNullToObject(out,"next_offset");
             const char *config=getenv("HEAD_CAM_MONITOR_CONFIG");
-            cJSON *monitor=config && *config?json_load(config):NULL;
-            nullable_text(out,"device_sn",str(monitor,"device_id")); cJSON_Delete(monitor);
+            cJSON *monitor=config && *config?json_load(config):monitor_defaults();
+            nullable_text(out,"device_sn",*str(monitor,"device_sn")?str(monitor,"device_sn"):str(monitor,"device_id")); cJSON_Delete(monitor);
             goto cleanup;
         }
         size_t end=offset+200; if(end>count) end=count;

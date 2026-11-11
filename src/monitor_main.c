@@ -54,7 +54,7 @@ static cJSON *payload(const cJSON *config,const char *event,unsigned seq) {
     cJSON *j=cJSON_CreateObject();char ts[40];cst_timestamp(ts);
     int summary=!strcmp(event,"recording_summary");
     if(summary) {
-        js(j,"device_sn",str(config,"device_id"));json_number(j,"schema_version",MONITOR_SCHEMA_VERSION);
+        js(j,"device_sn",*str(config,"device_sn")?str(config,"device_sn"):str(config,"device_id"));json_number(j,"schema_version",MONITOR_SCHEMA_VERSION);
     } else {
         js(j,"device_id",str(config,"device_id"));js(j,"device_type","head_cam_v2");
         js(j,"service","head-cam-monitor");js(j,"version",MONITOR_RELEASE_VERSION);js(j,"ip",local_ip);
@@ -123,8 +123,10 @@ static int qos1_pump(int fd) {
     inflight.dup=0;inflight.deadline=time(NULL)+5;
     return monitor_publish_qos1(fd,inflight.topic,inflight.payload,inflight.id,0);
 }
+static void mock_ota_after_reply(const char *payload);
 static int qos1_ack(int fd,unsigned id) {
     if(!inflight.id || id!=inflight.id) return -1;
+    mock_ota_after_reply(inflight.payload);
     free(inflight.topic);free(inflight.payload);memset(&inflight,0,sizeof inflight);
     return qos1_pump(fd);
 }
@@ -236,6 +238,7 @@ static cJSON *task_snapshot(const cJSON *config) {
 static void mark_report(void) { report_version[0]=0;report_open=1;report_sent_at=0;report_expires=0; }
 static int maybe_report(const char *topic,const cJSON *config) {
     cJSON *task=task_object();if(!task) return 0;
+    if(!strcmp(str(task,"upgradeStatus"),"pending")) return 0;
     const char *version=str(task,"statusVersion");
     if(!report_version[0] || strcmp(report_version,version)) {
         if(uuid_v4(report_request)) return -1;
@@ -354,10 +357,29 @@ static int dispatch_method(const cJSON *config,const char *method,cJSON *data,in
         cJSON_AddItemToObject(task,"startedAt",cJSON_CreateNull());cJSON_AddItemToObject(task,"finishedAt",cJSON_CreateNull());
         cJSON_AddItemToObject(task,"error",cJSON_CreateNull());
         cJSON_DeleteItemFromObject(session,"task");cJSON_AddItemToObject(session,"task",task);
+        js(task,"mockReplyRequestId","");
         mark_report();session_save();
         *result=accepted_data();*code=0;return 0;
     }
     *code=4002;return 0;
+}
+/* Only execute after the broker acknowledges the accepted response publication. */
+static void mock_ota_after_reply(const char *payload) {
+    cJSON *reply=cJSON_Parse(payload),*task=task_object();
+    cJSON *code=reply?cJSON_GetObjectItemCaseSensitive(reply,"code"):NULL;
+    if(reply && task && cJSON_IsNumber(code) && code->valuedouble==0 &&
+       !strcmp(str(reply,"method"),"ota.start") &&
+       *str(task,"mockReplyRequestId") &&
+       !strcmp(str(reply,"requestId"),str(task,"mockReplyRequestId")) &&
+       !strcmp(str(task,"upgradeStatus"),"pending")) {
+        char ts[40];cst_timestamp(ts);js(task,"startedAt",ts);
+        fprintf(stderr,"[OTA MOCK] taskId=%s upgradeId=%s toVersion=%s simulated upgrade succeeded\n",
+                str(task,"taskId"),str(task,"upgradeId"),str(task,"toVersion"));
+        fflush(stderr);
+        json_number(task,"progress",100);
+        bump_status(task,"success","completed",ts);
+    }
+    cJSON_Delete(reply);
 }
 static int reply_rpc(const char *topic,const cJSON *config,const char *request_id,const char *method,int code,cJSON *data) {
     cJSON *j=rpc_envelope(config,"rpc_response",request_id,method);
@@ -411,6 +433,10 @@ static int handle_downlink(const char *topic,const char *down_req,const char *up
         }
         free(digest);
     }
+    if(!code && !strcmp(method,"ota.start") && task_object() &&
+       !strcmp(str(task_object(),"upgradeStatus"),"pending")) {
+        js(task_object(),"mockReplyRequestId",request_id);session_save();
+    }
     int rc=reply_rpc(up_resp,config,request_id,method,code,result);
     cJSON_Delete(in);return rc;
 }
@@ -429,7 +455,7 @@ int main(int argc,char **argv) {
     char status_path[PATH_MAX],lock_path[PATH_MAX];
     if(path_join(status_path,sizeof(status_path),argv[2],"status.json") || path_join(lock_path,sizeof(lock_path),argv[2],".lock"))return 1;
     int lock=open(lock_path,O_CREAT|O_RDWR|O_CLOEXEC|O_NOFOLLOW,0600);if(lock<0 || flock(lock,LOCK_EX|LOCK_NB))return 1;
-    cJSON *config=json_load(argv[1]);
+    cJSON *config=!strcmp(argv[1],"--builtin")?monitor_defaults():json_load(argv[1]);
     int configured=config && cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(config,"enabled")) &&
         *str(config,"host") && id_ok(str(config,"device_id")) && *str(config,"topic_prefix") &&
         strlen(str(config,"topic_prefix"))<256 && !strpbrk(str(config,"topic_prefix"),"+#") &&

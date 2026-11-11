@@ -65,6 +65,11 @@ def main():
     if b'BEGIN CERTIFICATE' not in cert:
         raise ValueError('Invalid CA bundle')
     (args.out / 'ca.pem').write_bytes(cert)
+    info = (f'Target: Linux {args.arch}; static C11 executable\nSERVICE_TESTING=OFF\n'
+            f'Embedded ossutil SHA256: {hashlib.sha256(binary).hexdigest()}\n'
+            f'Embedded CA SHA256: {hashlib.sha256(cert).hexdigest()}\n'
+            'Dependencies: cJSON v1.7.19, OpenSSL, LZ4, Zstd')
+    (args.out / 'bundle_info.h').write_text('#define EMBEDDED_BUILD_INFO ' + json.dumps(info) + '\n')
     from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
     key, iv = os.urandom(32), os.urandom(16)
     encryptor = Cipher(algorithms.AES(key), modes.CTR(iv)).encryptor()

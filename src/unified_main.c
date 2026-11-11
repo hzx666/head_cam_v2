@@ -7,6 +7,9 @@
 #include <string.h>
 #include <sys/file.h>
 #include <unistd.h>
+#ifdef SERVICE_EMBEDDED
+#include "bundle_info.h"
+#endif
 int upload_main(int,char **);
 int monitor_main(int,char **);
 int supervisor_main(int,char **);
@@ -45,6 +48,22 @@ int main(int argc,char **argv) {
     if(!strcmp(name,"head-cam-monitor"))return monitor_main(argc,argv);
     if(strcmp(name,"head-cam-service"))return tools(argc,argv,1);
     if(argc>1) {
+        if(!strcmp(argv[1],"--version") || !strcmp(argv[1],"version")) {
+            puts(MONITOR_RELEASE_VERSION);return argc==2?0:64;
+        }
+        if(!strcmp(argv[1],"--build-info")) {
+            printf("head-cam-service %s\nBuilt: %s %s\nCompiler: %s\nEmbedded: upload, monitor, supervisor, lifecycle, monitor defaults, BusyBox, ossutil, CA, credentials\n",
+                   MONITOR_RELEASE_VERSION,__DATE__,__TIME__,__VERSION__);
+#ifdef SERVICE_EMBEDDED
+            puts(EMBEDDED_BUILD_INFO);
+#else
+            puts("SERVICE_TESTING=ON; not a production release");
+#endif
+            return argc==2?0:64;
+        }
+        const char *commands[]={"install","start","stop","restart","status","run","update","update-internal","dhcp"};
+        for(size_t i=0;i<sizeof(commands)/sizeof(commands[0]);i++)
+            if(!strcmp(argv[1],commands[i]))return argc==2?lifecycle_main(commands[i]):64;
         if(!strcmp(argv[1],"upload"))return upload_main(argc-1,argv+1);
         if(!strcmp(argv[1],"monitor"))return monitor_main(argc-1,argv+1);
         if(!strcmp(argv[1],"supervise"))return supervisor_main(argc-1,argv+1);
@@ -56,7 +75,7 @@ int main(int argc,char **argv) {
         if(argv[1][0]!='-')return tools(argc,argv,0);
     }
     if(argc>1 && (!strcmp(argv[1],"--help") || !strcmp(argv[1],"-h"))) {
-        puts("head-cam-service [upload OPTIONS | monitor CONFIG RUNTIME | supervise LOCK UPLOAD_ENTRY MONITOR_ENTRY]\nNo arguments: supervise components using monitor.json beside binary.");return 0;
+        puts("head-cam-service install|start|stop|restart|status|update|dhcp|--version|--build-info\nAdvanced: upload OPTIONS | monitor CONFIG RUNTIME | supervise LOCK EXECUTABLE\nNo arguments: supervise components using embedded monitor defaults.");return 0;
     }
     if(argc!=1)return upload_main(argc,argv);
     char exe[PATH_MAX],home[PATH_MAX],runtime[PATH_MAX],logs[PATH_MAX],lock[PATH_MAX];

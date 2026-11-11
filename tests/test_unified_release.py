@@ -14,8 +14,7 @@ with tempfile.TemporaryDirectory() as tmp:
     with socket.socket() as sock:
         sock.bind(('127.0.0.1', 0))
         port = sock.getsockname()[1]
-    env = dict(os.environ, HEAD_CAM_HOME=tmp, UPLOAD_HOST='127.0.0.1', UPLOAD_PORT=str(port))
-    env.pop('HEAD_CAM_MONITOR_CONFIG', None)
+    env = dict(os.environ, HEAD_CAM_HOME=tmp, HEAD_CAM_MONITOR_CONFIG=str(home/'monitor.json'), UPLOAD_HOST='127.0.0.1', UPLOAD_PORT=str(port))
     process = subprocess.Popen(['qemu-aarch64', str(ROOT/'dist/head-cam-service')], env=env)
     try:
         deadline = time.monotonic()+20
