@@ -1,6 +1,7 @@
 {
   "enabled": true,
-  "device_id": "head_cam_v2_test",
+  "device_id": "",
+  "hardware_model": "head_cam_v2",
   "device_type": "head_cam_v2",
   "host": "mqtt.simplesilicon-data.com",
   "port": 1883,
@@ -9,12 +10,12 @@
   "username": "",
   "password": "",
   "topic_prefix": "orin/prod",
-  "recording_root": "/mnt/sd/sd0",
-  "storage_path": "",
+  "recording_root": "/mnt/sd",
+  "storage_path": "/mnt/sd/sd0",
   "battery_capacity_path": "",
   "scan_interval_sec": 60,
   "report_interval_sec": 120,
   "warning_free_gb": 5,
   "critical_free_gb": 2,
-  "notes": "内置默认配置。当前统一设备标识 head_cam_v2_test；后续接入固件 SN 接口。"
+  "notes": "MQTT Client ID 使用 SDK 返回的完整 deviceCode。MQTT 主题和报文中的 device_id、device_sn 使用 SN 后四位。OTA 型号为 head_cam_v2。"
 }

@@ -15,8 +15,22 @@ add_executable(head-cam-service
     src/unified_main.c src/service_lifecycle.c src/service_supervisor.c src/monitor_main.c src/monitor_scan.c src/monitor_mqtt.c
     src/service_main.c src/service_util.c src/service_bundle.c
     src/service_upload.c src/service_tasks.c src/service_http.c
-    src/head_mcap.c src/tf_scan.c third_party/cjson/cJSON.c)
+    src/head_mcap.c src/tf_scan.c src/ego_client.c src/ota_download.c third_party/cjson/cJSON.c)
 target_include_directories(head-cam-service PRIVATE include third_party)
+if(SERVICE_DEPS AND NOT SERVICE_TESTING)
+    add_executable(ego-bridge tools/ego_bridge.c third_party/cjson/cJSON.c)
+    target_include_directories(ego-bridge PRIVATE include third_party)
+    target_link_libraries(ego-bridge PRIVATE dl Threads::Threads)
+    add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/ego_data.S"
+        COMMAND ${CMAKE_COMMAND} -DHELPER=$<TARGET_FILE:ego-bridge>
+            -DSTRIP=${CMAKE_STRIP}
+            -DSDK=${CMAKE_CURRENT_SOURCE_DIR}/third_party/libegosdk.so
+            -DOUTPUT=${CMAKE_CURRENT_BINARY_DIR}/ego_data.S
+            -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/embed_ego.cmake
+        DEPENDS ego-bridge third_party/libegosdk.so cmake/embed_ego.cmake VERBATIM)
+    target_sources(head-cam-service PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/ego_data.S")
+    target_compile_definitions(head-cam-service PRIVATE EGO_EMBEDDED)
+endif()
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 add_custom_command(OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/lifecycle_data.h"
     COMMAND ${Python3_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/embed_lifecycle.py" "${CMAKE_CURRENT_SOURCE_DIR}" "${CMAKE_CURRENT_BINARY_DIR}/lifecycle_data.h"
@@ -39,15 +53,16 @@ endif()
 if(SERVICE_DEPS)
     target_include_directories(head-cam-service BEFORE PRIVATE "${SERVICE_DEPS}/usr/include" "${SERVICE_DEPS}/usr/include/aarch64-linux-gnu")
     set(DEP_LIB "${SERVICE_DEPS}/usr/lib/aarch64-linux-gnu")
-    target_link_libraries(head-cam-service PRIVATE "${DEP_LIB}/libcrypto.a" "${DEP_LIB}/libzstd.a" "${DEP_LIB}/liblz4.a")
+    target_link_libraries(head-cam-service PRIVATE "${DEP_LIB}/libssl.a" "${DEP_LIB}/libcrypto.a" "${DEP_LIB}/libzstd.a" "${DEP_LIB}/liblz4.a")
 else()
     if(SERVICE_STATIC)
         set(CMAKE_FIND_LIBRARY_SUFFIXES .a)
     endif()
     find_library(CRYPTO_LIB crypto REQUIRED)
+    find_library(SSL_LIB ssl REQUIRED)
     find_library(ZSTD_LIB zstd REQUIRED)
     find_library(LZ4_LIB lz4 REQUIRED)
-    target_link_libraries(head-cam-service PRIVATE ${CRYPTO_LIB} ${ZSTD_LIB} ${LZ4_LIB})
+    target_link_libraries(head-cam-service PRIVATE ${SSL_LIB} ${CRYPTO_LIB} ${ZSTD_LIB} ${LZ4_LIB})
 endif()
 target_link_libraries(head-cam-service PRIVATE Threads::Threads m dl)
 

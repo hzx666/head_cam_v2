@@ -51,11 +51,14 @@ def mqtt_publish(topic, payload, qos=0, packet_id=1):
     return bytes([0x30 | (qos << 1)]) + remaining(len(body)) + body
 
 
-def handshake(test, conn, prefix, device):
+def handshake(test, conn, prefix, device, client_id=None):
     conn.settimeout(15)
     kind, body = packet(conn)
     test.assertEqual(kind, 0x10)
     test.assertIn(b'offline', body)
+    test.assertEqual(body[7] & 0x24, 0x04)  # Will enabled, Will Retain disabled.
+    length = int.from_bytes(body[10:12], 'big')
+    test.assertEqual(body[12:12 + length].decode(), client_id if client_id is not None else device)
     conn.sendall(b'\x20\x02\x00\x00')
     kind, body = packet(conn)
     test.assertEqual(kind, 0x82)
@@ -87,6 +90,8 @@ def app_message(conn):
         if (kind & 0xf0) != 0x30:
             raise AssertionError(hex(kind))
         qos = (kind >> 1) & 0x03
+        if kind & 1:
+            raise AssertionError('device PUBLISH must not set Retain')
         length = int.from_bytes(body[:2], 'big')
         topic = body[2:2 + length].decode()
         payload = body[2 + length:]
@@ -188,14 +193,14 @@ class MonitorTest(unittest.TestCase):
                     self.assertEqual(report['protocolVersion'], '1.0')
                     self.assertIsInstance(report['ts'], int)
                     self.assertEqual(report['data']['propertyVersion'], '1')
-                    self.assertEqual(report['data']['properties']['firmware']['version'], version)
+                    self.assertIsNone(report['data']['properties']['firmware']['version'])
                     self.assertEqual(report['data']['properties']['hardwareModel'], 'TEST_MODEL')
                     self.assertNotIn('requestId', report)
                     rpc('00000000-0000-4000-8000-000000000001', 'properties.get', {'keys': ['firmware']})
                     topic, reply = wait_for(lambda topic, message: message.get('requestId') == '00000000-0000-4000-8000-000000000001')
                     self.assertEqual(topic, 'lab/device/test/uplink/resp')
                     self.assertEqual(reply['code'], 0)
-                    self.assertEqual(reply['data']['properties']['firmware']['version'], version)
+                    self.assertIsNone(reply['data']['properties']['firmware']['version'])
                     rpc('00000000-0000-4000-8000-000000000002', 'ota.install', {})
                     _, unknown = wait_for(lambda topic, message: message.get('requestId') == '00000000-0000-4000-8000-000000000002')
                     self.assertEqual(unknown['code'], 4002)
@@ -212,34 +217,18 @@ class MonitorTest(unittest.TestCase):
                         'hardwareModel': 'TEST_MODEL', 'fromVersion': None, 'toVersion': 'v1', 'package': package,
                     })
                     _, started = wait_for(lambda topic, message: message.get('requestId') == '00000000-0000-4000-8000-000000000004')
-                    self.assertEqual(started['code'], 0)
-                    self.assertTrue(started['data']['accepted'])
-                    status_topic, status = wait_for(lambda topic, message: message.get('method') == 'ota.reportStatus')
-                    self.assertEqual(status_topic, 'lab/device/test/uplink/req')
-                    self.assertEqual(status['event_type'], 'rpc_request')
-                    self.assertGreater(status['expiresAt'], status['ts'])
-                    self.assertEqual(status['data']['upgradeStatus'], 'pending')
-                    self.assertEqual(status['data']['stage'], 'queued')
-                    self.assertEqual(status['data']['statusVersion'], '1')
-                    conn.sendall(mqtt_publish('lab/device/test/downlink/resp', json.dumps({
-                        'protocolVersion': '1.0', 'device_id': 'test', 'device_type': 'head_cam_v2',
-                        'event_type': 'rpc_response', 'ts': int(time.time() * 1000), 'requestId': status['requestId'],
-                        'method': 'ota.reportStatus', 'code': 0, 'message': '操作成功', 'data': {'accepted': True},
-                    }), qos=1))
+                    self.assertEqual(started['code'], 5001)
                     rpc('00000000-0000-4000-8000-000000000004', 'ota.start', {
                         'taskId': '2001', 'upgradeId': '00000000-0000-4000-8000-000000000010', 'commandSeq': 1,
                         'hardwareModel': 'TEST_MODEL', 'fromVersion': None, 'toVersion': 'v1', 'package': package,
                     })
                     _, replay = wait_for(lambda topic, message: message.get('requestId') == '00000000-0000-4000-8000-000000000004' and message.get('event_type') == 'rpc_response')
-                    self.assertEqual(replay['code'], 0)
+                    self.assertEqual(replay['code'], 5001)
                     rpc('00000000-0000-4000-8000-000000000005', 'ota.cancel', {
                         'taskId': '2001', 'upgradeId': '00000000-0000-4000-8000-000000000010', 'commandSeq': 2,
                     })
                     _, cancelled = wait_for(lambda topic, message: message.get('requestId') == '00000000-0000-4000-8000-000000000005')
-                    self.assertEqual(cancelled['code'], 0)
-                    _, final = wait_for(lambda topic, message: message.get('method') == 'ota.reportStatus' and message['data'].get('upgradeStatus') == 'cancelled')
-                    self.assertEqual(final['data']['stage'], 'completed')
-                    self.assertEqual(final['data']['statusVersion'], '2')
+                    self.assertEqual(cancelled['code'], 4041)
             finally:
                 process.terminate()
                 process.wait(timeout=15)

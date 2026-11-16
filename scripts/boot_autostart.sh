@@ -67,6 +67,8 @@ switch_to() {
 }
 update_release() (
     [ "$OSS_UPDATE_ENABLED" = true ] || exit 0
+    exec 5>"$HEAD_CAM_HOME/runtime/operation.lock"
+    flock -n 5 || { log 'Upload or firmware upgrade active; service update deferred'; exit 0; }
     exec 8>"$HEAD_CAM_HOME/.update-cache/update.lock"
     flock -n 8 || exit 0
     old=$(active); current=$(read_version "$old") || exit 1
@@ -224,14 +226,33 @@ install_service() {
     # 仅注册启动入口，不再复制整份程序，避免小分区重复占用。
     exec 6>"$HEAD_CAM_HOME/runtime/install.lock"
     flock -n 6 || { log 'Another installer is running';return 1; }
-    if [ -f "$DIY_PATH" ] && grep -F '# BEGIN HEAD_CAM_SERVICE' "$DIY_PATH" >/dev/null; then
-        grep -F "HEAD_CAM_HOME='$HEAD_CAM_HOME'" "$DIY_PATH" >/dev/null || { log 'Hook belongs to another directory';return 1; }
+    hook_markers=''
+    if [ -f "$DIY_PATH" ]; then
+        hook_markers=$(sed -n '/^# BEGIN HEAD_CAM_SERVICE$/p; /^# END HEAD_CAM_SERVICE$/p' "$DIY_PATH") || return 1
+    fi
+    if [ -n "$hook_markers" ]; then
+        expected_markers=$(printf '%s\n' '# BEGIN HEAD_CAM_SERVICE' '# END HEAD_CAM_SERVICE')
+        if [ "$hook_markers" != "$expected_markers" ]; then
+            log "Invalid head-cam hook markers in $DIY_PATH"
+            return 1
+        fi
+        hook_home=$(sed -n "/^# BEGIN HEAD_CAM_SERVICE$/,/^# END HEAD_CAM_SERVICE$/s|^[[:space:]]*HEAD_CAM_HOME='\(/[^']*\)'[[:space:]]*$|\1|p" "$DIY_PATH") || return 1
+        case "$hook_home" in
+            ''|*[!a-zA-Z0-9_./-]*) log "Cannot determine existing hook directory in $DIY_PATH"; return 1 ;;
+        esac
+        if [ "$hook_home" != "$HEAD_CAM_HOME" ]; then
+            if [ -e "$hook_home" ] || [ -L "$hook_home" ]; then
+                log "Hook belongs to another directory: $hook_home (requested: $HEAD_CAM_HOME)"
+                return 1
+            fi
+            log "Replacing hook for missing directory: $hook_home"
+        fi
     fi
     (
         [ -d "${DIY_PATH%/*}" ] || { log 'Device DIY directory unavailable';return 1; }
         temporary=$(mktemp "${DIY_PATH}.head-cam.XXXXXX")
         if [ -f "$DIY_PATH" ]; then
-            sed '/# BEGIN HEAD_CAM_SERVICE/,/# END HEAD_CAM_SERVICE/d' "$DIY_PATH" > "$temporary"
+            sed '/^# BEGIN HEAD_CAM_SERVICE$/,/^# END HEAD_CAM_SERVICE$/d' "$DIY_PATH" > "$temporary"
             [ -f "${DIY_PATH}.head-cam.bak" ] || cp "$DIY_PATH" "${DIY_PATH}.head-cam.bak"
         else
             printf '#!/bin/sh\n' > "$temporary"

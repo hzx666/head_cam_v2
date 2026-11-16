@@ -43,8 +43,9 @@ static void launch(child *c) {
             if(n<0 || (size_t)n>=sizeof(runtime) || (mkdir(runtime,0700) && errno!=EEXIST))_exit(125);
             if(!strcmp(c->mode,"monitor")) {
                 const char *configured=getenv("HEAD_CAM_MONITOR_CONFIG");
-                n=snprintf(config,sizeof(config),"%s","--builtin");
+                n=snprintf(config,sizeof(config),"%s/monitor.json",base);
                 if(n<0 || (size_t)n>=sizeof(config))_exit(125);
+                if(access(config,F_OK))snprintf(config,sizeof(config),"%s","--builtin");
                 execl(c->path,c->path,"monitor",configured?configured:config,runtime,(char *)NULL);
             } else {
                 const char *host=getenv("UPLOAD_HOST"),*port=getenv("UPLOAD_PORT"),*root=getenv("UPLOAD_ALLOWED_ROOT");

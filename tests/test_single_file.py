@@ -23,7 +23,12 @@ class SingleFileTest(unittest.TestCase):
             shutil.copy2(ROOT/'dist/head-cam-service',binary)
             binary.chmod(0o700)
             hook=Path(tmp)/'diy.sh'
-            hook.write_text('#!/bin/sh\necho existing-device-setup\n')
+            old_home=Path(tmp)/'old-device'
+            old_home.mkdir()
+            old_hook=(f"#!/bin/sh\necho existing-device-setup\n"
+                      f"# BEGIN HEAD_CAM_SERVICE\nHEAD_CAM_HOME='{old_home}'\n"
+                      "# END HEAD_CAM_SERVICE\n")
+            hook.write_text(old_hook)
             # Avoid contacting production MQTT; this override is for offline QA.
             config=Path(tmp)/'disabled.json'
             config.write_text('{"enabled":false}')
@@ -55,8 +60,21 @@ class SingleFileTest(unittest.TestCase):
                 self.assertEqual(version.returncode,0,version.stderr)
                 self.assertEqual(version.stdout.strip(),(ROOT/'SERVICE_VERSION').read_text().strip())
                 self.assertIn('Compiler:',command('--build-info').stdout)
+                conflict=command('install')
+                self.assertNotEqual(conflict.returncode,0)
+                self.assertIn(str(old_home),conflict.stdout)
+                self.assertEqual(hook.read_text(),old_hook)
+                old_home.rmdir()
+                incomplete_hook=old_hook.removesuffix('# END HEAD_CAM_SERVICE\n')+'echo keep-this-line\n'
+                hook.write_text(incomplete_hook)
+                invalid=command('install')
+                self.assertNotEqual(invalid.returncode,0)
+                self.assertIn('Invalid head-cam hook markers',invalid.stdout)
+                self.assertEqual(hook.read_text(),incomplete_hook)
+                hook.write_text(old_hook)
                 installed=command('install')
                 self.assertEqual(installed.returncode,0,installed.stdout+installed.stderr)
+                self.assertEqual((Path(tmp)/'diy.sh.head-cam.bak').read_text(),old_hook)
                 ready()
                 for name in ('monitor.json','SERVICE_VERSION','SHA256SUMS','boot_autostart.sh','manual_dhcp.sh'):
                     self.assertFalse((home/name).exists(),name)

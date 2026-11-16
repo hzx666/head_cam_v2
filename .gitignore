@@ -1,4 +1,6 @@
 /build-service*/
+/build-ota-native/
+/build-sdk-probe/
 /dist/
 /.deps/
 /runtime/

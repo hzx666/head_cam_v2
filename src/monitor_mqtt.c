@@ -88,13 +88,13 @@ int monitor_connect(const cJSON *c,const char *topic,const char *will) {
     setsockopt(fd,SOL_SOCKET,SO_RCVTIMEO,&timeout,sizeof(timeout));
     setsockopt(fd,SOL_SOCKET,SO_SNDTIMEO,&timeout,sizeof(timeout));
     unsigned char body[16384];size_t n=0;
-    const char *id=str(c,"device_id"),*user=str(c,"username"),*pass=str(c,"password");
+    const char *sn=str(c,"device_sn"),*user=str(c,"username"),*pass=str(c,"password");
+    const char *id=*sn?sn:str(c,"device_id");
     if(strlen(id)+strlen(user)+strlen(pass)+strlen(topic)+strlen(will)>15000) {close(fd);return -1;}
     field(body,&n,"MQTT");body[n++]=4;
-    body[n++]=0x26|(*user?0x80:0)|(*pass?0x40:0); /* clean session + retained QoS0 will */
+    body[n++]=0x06|(*user?0x80:0)|(*pass?0x40:0); /* clean session + QoS 0 will */
     body[n++]=0;body[n++]=60;
-    char client[256];snprintf(client,sizeof(client),"head-cam-%s",id);
-    field(body,&n,client);field(body,&n,topic);field(body,&n,will);
+    field(body,&n,id);field(body,&n,topic);field(body,&n,will);
     if(*user)field(body,&n,user);
     if(*pass)field(body,&n,pass);
     if(packet(fd,0x10,body,n) || response(fd,0x20)) {close(fd);return -1;}

@@ -1,5 +1,9 @@
 /* 扫描线程和 MQTT 循环各自运行，通过内存快照交接；上传完全独立。 */
 #include "monitor.h"
+#include "ota.h"
+#include <sys/statvfs.h>
+#include <sys/sysinfo.h>
+#include <stdatomic.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -14,6 +18,7 @@
 volatile sig_atomic_t monitor_stop;
 static pthread_mutex_t mutex=PTHREAD_MUTEX_INITIALIZER;
 static cJSON *latest;
+static _Atomic int ota_fast_query;
 static unsigned generation;
 static char local_ip[128]="";
 static struct { char channel[24],request_id[48],method[64],message[64]; int code,valid; } last_rpc;
@@ -26,15 +31,30 @@ static struct { char *topic,*payload; unsigned id; int dup; time_t deadline; } i
 static struct { char *topic,*payload; } qos1_queue[4];
 static int qos1_head,qos1_tail,qos1_count;
 static unsigned qos1_packet_id=1;
+static void update_device_cache(const cJSON *value);
+static cJSON *cached_device(void);
 static void stop_monitor(int sig){(void)sig;monitor_stop=1;}
 static void pause_seconds(unsigned n){while(n-- && !monitor_stop)sleep(1);}
 static void *scan_loop(void *arg) {
     const cJSON *config=arg;char *previous=NULL;
     while(!monitor_stop) {
         cJSON *snapshot=monitor_scan(config);
+        cJSON *device=ego_query();
+        update_device_cache(device);
+        cJSON_DeleteItemFromObject(snapshot,"battery");
+        cJSON *battery=cJSON_AddObjectToObject(snapshot,"battery");
+        int state_valid=device && cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(device,"stateValid"));
+        int soc=state_valid?(int)num(device,"battery"):-1;
+        int charge=state_valid?(int)num(device,"charge"):-1;
+        jb(battery,"valid",soc>=0 && soc<=100);
+        cJSON_AddItemToObject(battery,"soc",soc>=0 && soc<=100?cJSON_CreateNumber(soc):cJSON_CreateNull());
+        cJSON_AddItemToObject(battery,"charging",charge==0 || charge==1?cJSON_CreateBool(charge):cJSON_CreateNull());
+        cJSON_Delete(device);
         pthread_mutex_lock(&mutex);
         if(*str(snapshot,"error") && latest) {
             cJSON *old=cJSON_Duplicate(latest,1);
+            cJSON_DeleteItemFromObject(old,"battery");
+            cJSON_AddItemToObject(old,"battery",cJSON_Duplicate(cJSON_GetObjectItemCaseSensitive(snapshot,"battery"),1));
             cJSON_DeleteItemFromObject(old,"error");js(old,"error",str(snapshot,"error"));cJSON_Delete(snapshot);snapshot=old;
         }
         cJSON *compare=cJSON_Duplicate(snapshot,1);cJSON_DeleteItemFromObject(compare,"scan_ts");
@@ -42,7 +62,10 @@ static void *scan_loop(void *arg) {
         if(!previous || !fingerprint || strcmp(previous,fingerprint))generation++;
         free(previous);previous=fingerprint;cJSON_Delete(latest);latest=snapshot;
         pthread_mutex_unlock(&mutex);
-        pause_seconds((unsigned)num(config,"scan_interval_sec"));
+        for(unsigned elapsed=0;elapsed<(unsigned)num(config,"scan_interval_sec") && !monitor_stop;elapsed++) {
+            if(ota_fast_query && elapsed>=5)break;
+            pause_seconds(1);
+        }
     }
     free(previous);return NULL;
 }
@@ -50,11 +73,17 @@ static void cst_timestamp(char ts[40]) {
     time_t now=time(NULL)+8*3600;struct tm tm;
     gmtime_r(&now,&tm);strftime(ts,40,"%Y-%m-%dT%H:%M:%S+08:00",&tm);
 }
+static const char *short_sn(const char *sn) {
+    size_t length=strlen(sn);
+    return length>4?sn+length-4:sn;
+}
 static cJSON *payload(const cJSON *config,const char *event,unsigned seq) {
     cJSON *j=cJSON_CreateObject();char ts[40];cst_timestamp(ts);
     int summary=!strcmp(event,"recording_summary");
     if(summary) {
-        js(j,"device_sn",*str(config,"device_sn")?str(config,"device_sn"):str(config,"device_id"));json_number(j,"schema_version",MONITOR_SCHEMA_VERSION);
+        const char *sn=str(config,"device_sn");
+        js(j,"device_sn",short_sn(*sn?sn:str(config,"device_id")));
+        json_number(j,"schema_version",MONITOR_SCHEMA_VERSION);
     } else {
         js(j,"device_id",str(config,"device_id"));js(j,"device_type","head_cam_v2");
         js(j,"service","head-cam-monitor");js(j,"version",MONITOR_RELEASE_VERSION);js(j,"ip",local_ip);
@@ -123,10 +152,10 @@ static int qos1_pump(int fd) {
     inflight.dup=0;inflight.deadline=time(NULL)+5;
     return monitor_publish_qos1(fd,inflight.topic,inflight.payload,inflight.id,0);
 }
-static void mock_ota_after_reply(const char *payload);
+static void ota_after_reply(const char *payload);
 static int qos1_ack(int fd,unsigned id) {
     if(!inflight.id || id!=inflight.id) return -1;
-    mock_ota_after_reply(inflight.payload);
+    ota_after_reply(inflight.payload);
     free(inflight.topic);free(inflight.payload);memset(&inflight,0,sizeof inflight);
     return qos1_pump(fd);
 }
@@ -169,6 +198,8 @@ static const char *rpc_text(int code) {
     case 4094: return "INVALID_STATE";
     case 4095: return "UNSAFE_STAGE";
     case 4221: return "MODEL_MISMATCH";
+    case 4222: return "VERSION_CONFLICT";
+    case 4223: return "CHECKSUM_MISMATCH";
     default: return "TEMPORARY_UNAVAILABLE";
     }
 }
@@ -189,9 +220,16 @@ static cJSON *rpc_envelope(const cJSON *config,const char *event,const char *req
 }
 static cJSON *firmware_value(void) {
     cJSON *f=cJSON_CreateObject();
-    js(f,"version",MONITOR_RELEASE_VERSION);
+    cJSON *device=cached_device();
+    if(device && cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(device,"deviceValid")) && *str(device,"version")) js(f,"version",str(device,"version"));
+    else cJSON_AddNullToObject(f,"version");
+    cJSON_Delete(device);
     cJSON_AddItemToObject(f,"upgradeSource",cJSON_CreateNull());
     cJSON_AddItemToObject(f,"upgradeId",cJSON_CreateNull());
+    cJSON *known=session?cJSON_GetObjectItemCaseSensitive(session,"firmware"):NULL;
+    if(known && *str(f,"version") && !strcmp(str(known,"version"),str(f,"version"))) {
+        cJSON_Delete(f);return cJSON_Duplicate(known,1);
+    }
     return f;
 }
 static cJSON *properties_value(const cJSON *config) {
@@ -199,6 +237,14 @@ static cJSON *properties_value(const cJSON *config) {
     const char *model=str(config,"hardware_model");
     if(*model) js(p,"hardwareModel",model); else cJSON_AddItemToObject(p,"hardwareModel",cJSON_CreateNull());
     cJSON_AddItemToObject(p,"firmware",firmware_value());
+    char *current=cJSON_PrintUnformatted(p);
+    if(current && strcmp(current,str(session,"propertyFingerprint"))) {
+        unsigned long long version=strtoull(str(session,"propertyVersion"),NULL,10);
+        if(*str(session,"propertyFingerprint"))version++;
+        char next[32];snprintf(next,sizeof(next),"%llu",version);
+        js(session,"propertyVersion",next);js(session,"propertyFingerprint",current);session_save();
+    }
+    free(current);
     return p;
 }
 static int publish_properties(const char *topic,const cJSON *config) {
@@ -207,8 +253,8 @@ static int publish_properties(const char *topic,const cJSON *config) {
     cJSON_DeleteItemFromObject(j,"requestId");cJSON_DeleteItemFromObject(j,"method");
     js(j,"reportId",id);
     cJSON *data=cJSON_AddObjectToObject(j,"data");
-    js(data,"propertyVersion",str(session,"propertyVersion"));
     cJSON_AddItemToObject(data,"properties",properties_value(config));
+    js(data,"propertyVersion",str(session,"propertyVersion"));
     return enqueue_json(topic,j);
 }
 static cJSON *task_object(void) {
@@ -230,8 +276,9 @@ static cJSON *task_snapshot(const cJSON *config) {
     cJSON_AddItemToObject(d,"finishedAt",finished?cJSON_Duplicate(finished,1):cJSON_CreateNull());
     cJSON_AddItemToObject(d,"error",error?cJSON_Duplicate(error,1):cJSON_CreateNull());
     if(!strcmp(str(task,"upgradeStatus"),"success")) {
-        js(d,"propertyVersion",str(session,"propertyVersion"));
-        cJSON_AddItemToObject(d,"firmware",firmware_value());
+        js(d,"propertyVersion",str(task,"propertyVersion"));
+        cJSON *firmware=cJSON_GetObjectItemCaseSensitive(task,"firmware");
+        cJSON_AddItemToObject(d,"firmware",firmware?cJSON_Duplicate(firmware,1):firmware_value());
     }
     (void)config;return d;
 }
@@ -240,6 +287,7 @@ static int maybe_report(const char *topic,const cJSON *config) {
     cJSON *task=task_object();if(!task) return 0;
     if(!strcmp(str(task,"upgradeStatus"),"pending")) return 0;
     const char *version=str(task,"statusVersion");
+    if(!strcmp(str(session,"acknowledgedStatusVersion"),version)) return 0;
     if(!report_version[0] || strcmp(report_version,version)) {
         if(uuid_v4(report_request)) return -1;
         snprintf(report_version,sizeof(report_version),"%s",version);
@@ -249,12 +297,20 @@ static int maybe_report(const char *topic,const cJSON *config) {
     long long now=unix_ms();
     if(report_expires && now>=report_expires) { if(uuid_v4(report_request)) return -1; report_expires=0; report_sent_at=0; }
     if(report_sent_at && now<report_sent_at+10000) return 0;
-    cJSON *j=rpc_envelope(config,"rpc_request",report_request,"ota.reportStatus");
-    long long expires=now+120000;json_number(j,"expiresAt",(double)expires);
-    cJSON *data=task_snapshot(config);if(!data) data=cJSON_CreateObject();
-    cJSON_AddItemToObject(j,"data",data);
-    if(enqueue_json(topic,j)) return -1;
-    report_sent_at=now;report_expires=expires;remember_rpc("uplink/req",report_request,"ota.reportStatus",0,"sent");
+    cJSON *stored=cJSON_GetObjectItemCaseSensitive(session,"pendingReport");
+    if(!stored || strcmp(str(stored,"device_id"),str(config,"device_id")) ||
+       strcmp(str(cJSON_GetObjectItemCaseSensitive(stored,"data"),"statusVersion"),version) || num(stored,"expiresAt")<=now) {
+        cJSON_DeleteItemFromObject(session,"pendingReport");
+        stored=rpc_envelope(config,"rpc_request",report_request,"ota.reportStatus");
+        json_number(stored,"expiresAt",(double)(now+120000));
+        cJSON_AddItemToObject(stored,"data",task_snapshot(config));
+        cJSON_AddItemToObject(session,"pendingReport",stored);
+        if(json_save(session_path,session))return -1;
+    }
+    snprintf(report_request,sizeof(report_request),"%s",str(stored,"requestId"));
+    report_expires=(long long)num(stored,"expiresAt");
+    if(enqueue_json(topic,cJSON_Duplicate(stored,1))) return -1;
+    report_sent_at=now;remember_rpc("uplink/req",report_request,"ota.reportStatus",0,"sent");
     return 0;
 }
 static void bump_status(cJSON *task,const char *status,const char *stage,const char *finished) {
@@ -264,6 +320,7 @@ static void bump_status(cJSON *task,const char *status,const char *stage,const c
     if(finished) js(task,"finishedAt",finished); else cJSON_DeleteItemFromObject(task,"finishedAt"),cJSON_AddItemToObject(task,"finishedAt",cJSON_CreateNull());
     mark_report();session_save();
 }
+#include "monitor_ota.inc"
 static int hex64(const char *s) {
     if(strlen(s)!=64) return 0;
     for(int i=0;i<64;i++) if(!((s[i]>='0'&&s[i]<='9')||(s[i]>='a'&&s[i]<='f'))) return 0;
@@ -322,11 +379,17 @@ static int dispatch_method(const cJSON *config,const char *method,cJSON *data,in
         if(strcmp(str(task,"upgradeStatus"),"pending") && strcmp(str(task,"upgradeStatus"),"upgrading") && strcmp(str(task,"upgradeStatus"),"paused")) { *code=4094; return 0; }
         const char *stage=str(task,"stage");
         if(!strcmp(stage,"installing") || !strcmp(stage,"rebooting") || !strcmp(stage,"selfChecking")) { *code=4095; return 0; }
+        if(ota_running) {
+            pthread_mutex_lock(&ota_mutex);ota_cancelled=1;pthread_cond_broadcast(&ota_changed);pthread_mutex_unlock(&ota_mutex);
+            json_number(task,"commandSeq",seq);session_save();
+            *result=accepted_data();*code=0;return 0;
+        }
         json_number(task,"commandSeq",seq);char ts[40];cst_timestamp(ts);bump_status(task,"cancelled","completed",ts);
         *result=accepted_data();*code=0;return 0;
     }
     if(!strcmp(method,"ota.start")) {
         cJSON *package=cJSON_GetObjectItemCaseSensitive(data,"package"),*from=cJSON_GetObjectItemCaseSensitive(data,"fromVersion");
+        const cJSON *allow_downgrade=cJSON_GetObjectItemCaseSensitive(data,"allowDowngrade");
         cJSON *seq_item=cJSON_GetObjectItemCaseSensitive(data,"commandSeq"),*size_item=package?cJSON_GetObjectItemCaseSensitive(package,"fileSize"):NULL;
         const char *model=str(config,"hardware_model");
         if(!*model || strcmp(str(data,"hardwareModel"),model)) { *code=4221; return 0; }
@@ -334,9 +397,11 @@ static int dispatch_method(const cJSON *config,const char *method,cJSON *data,in
            !cJSON_IsNumber(seq_item) || num(data,"commandSeq")<1 || !cJSON_IsObject(package) ||
            !hex64(str(package,"sha256")) || !cJSON_IsNumber(size_item) || size_item->valuedouble<=0 || strncmp(str(package,"downloadUrl"),"https://",8) ||
            !token_ok(str(package,"fileName"),256) || !token_ok(str(package,"downloadExpiresAt"),64) ||
-           (from && !cJSON_IsNull(from) && !cJSON_IsString(from))) { *code=4001; return 0; }
+           (from && !cJSON_IsNull(from) && !cJSON_IsString(from)) ||
+           (allow_downgrade && !cJSON_IsBool(allow_downgrade))) { *code=4001; return 0; }
         cJSON *task=task_object();
         if(task && strcmp(str(task,"upgradeId"),str(data,"upgradeId"))) {
+            if(ota_running) { *code=4093; return 0; }
             const char *state=str(task,"upgradeStatus");
             if(strcmp(state,"success") && strcmp(state,"failed") && strcmp(state,"cancelled")) { *code=4093; return 0; }
             task=NULL;
@@ -348,6 +413,23 @@ static int dispatch_method(const cJSON *config,const char *method,cJSON *data,in
             if(seq>previous) { *code=4093; return 0; }
             *result=accepted_data();*code=0;return 0;
         }
+        cJSON *device=ego_query();
+        update_device_cache(device);
+        int comparison=0;
+        if(!device || !cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(device,"deviceValid"))) {
+            cJSON_Delete(device);*code=5001;return 0;
+        }
+        const char *sn=str(config,"device_sn");
+        if(strcmp(str(device,"deviceCode"),*sn?sn:str(config,"device_id"))) {
+            cJSON_Delete(device);*code=4032;return 0;
+        }
+        int invalid=ota_compare_versions(str(device,"version"),str(data,"toVersion"),&comparison);
+        cJSON_Delete(device);
+        if(invalid || comparison==0 || (comparison>0 && !cJSON_IsTrue(allow_downgrade))) {
+            *code=4222;return 0;
+        }
+        if(size_item->valuedouble>UINT32_MAX || size_item->valuedouble!=(double)(uint32_t)size_item->valuedouble ||
+           !token_ok(str(package,"firmwareId"),64)) {*code=4001;return 0;}
         task=cJSON_CreateObject();
         js(task,"taskId",str(data,"taskId"));js(task,"upgradeId",str(data,"upgradeId"));
         json_number(task,"commandSeq",num(data,"commandSeq"));js(task,"hardwareModel",str(data,"hardwareModel"));
@@ -357,29 +439,14 @@ static int dispatch_method(const cJSON *config,const char *method,cJSON *data,in
         cJSON_AddItemToObject(task,"startedAt",cJSON_CreateNull());cJSON_AddItemToObject(task,"finishedAt",cJSON_CreateNull());
         cJSON_AddItemToObject(task,"error",cJSON_CreateNull());
         cJSON_DeleteItemFromObject(session,"task");cJSON_AddItemToObject(session,"task",task);
-        js(task,"mockReplyRequestId","");
+        cJSON_DeleteItemFromObject(session,"acknowledgedStatusVersion");
+        cJSON_DeleteItemFromObject(session,"pendingReport");
+        js(task,"acceptedRequestId","");
         mark_report();session_save();
+        if(json_save(session_path,session)) {*code=5001;return 0;}
         *result=accepted_data();*code=0;return 0;
     }
     *code=4002;return 0;
-}
-/* Only execute after the broker acknowledges the accepted response publication. */
-static void mock_ota_after_reply(const char *payload) {
-    cJSON *reply=cJSON_Parse(payload),*task=task_object();
-    cJSON *code=reply?cJSON_GetObjectItemCaseSensitive(reply,"code"):NULL;
-    if(reply && task && cJSON_IsNumber(code) && code->valuedouble==0 &&
-       !strcmp(str(reply,"method"),"ota.start") &&
-       *str(task,"mockReplyRequestId") &&
-       !strcmp(str(reply,"requestId"),str(task,"mockReplyRequestId")) &&
-       !strcmp(str(task,"upgradeStatus"),"pending")) {
-        char ts[40];cst_timestamp(ts);js(task,"startedAt",ts);
-        fprintf(stderr,"[OTA MOCK] taskId=%s upgradeId=%s toVersion=%s simulated upgrade succeeded\n",
-                str(task,"taskId"),str(task,"upgradeId"),str(task,"toVersion"));
-        fflush(stderr);
-        json_number(task,"progress",100);
-        bump_status(task,"success","completed",ts);
-    }
-    cJSON_Delete(reply);
 }
 static int reply_rpc(const char *topic,const cJSON *config,const char *request_id,const char *method,int code,cJSON *data) {
     cJSON *j=rpc_envelope(config,"rpc_response",request_id,method);
@@ -397,11 +464,23 @@ static int handle_downlink(const char *topic,const char *down_req,const char *up
     if(len) memcpy(text,bytes,len);text[len]=0;
     cJSON *in=cJSON_Parse(text);free(text);
     if(!strcmp(topic,down_resp)) {
-        if(in) {
+        if(in && !strcmp(str(in,"device_id"),str(config,"device_id")) &&
+           !strcmp(str(in,"device_type"),device_type_of(config)) && !strcmp(str(in,"event_type"),"rpc_response")) {
             cJSON *code_item=cJSON_GetObjectItemCaseSensitive(in,"code");
             int code=cJSON_IsNumber(code_item)?(int)code_item->valuedouble:-1;
             remember_rpc("downlink/resp",str(in,"requestId"),str(in,"method"),code,str(in,"message"));
-            if(report_request[0] && !strcmp(str(in,"requestId"),report_request) && !strcmp(str(in,"method"),"ota.reportStatus") && !code) report_open=0;
+            if(report_request[0] && !strcmp(str(in,"requestId"),report_request) && !strcmp(str(in,"method"),"ota.reportStatus") && !code) {
+                report_open=0;js(session,"acknowledgedStatusVersion",report_version);session_save();
+            }
+            if(download_request[0] && !strcmp(str(in,"requestId"),download_request) && !strcmp(str(in,"method"),"ota.getDownloadUrl") && !code) {
+                cJSON *data=cJSON_GetObjectItemCaseSensitive(in,"data");
+                cJSON *package=cJSON_GetObjectItemCaseSensitive(task_object(),"package");
+                if(!strcmp(str(data,"firmwareId"),str(package,"firmwareId")) && !strncmp(str(data,"downloadUrl"),"https://",8)) {
+                    pthread_mutex_lock(&ota_mutex);
+                    if(ota_new_package){cJSON_Delete(ota_new_package);ota_new_package=cJSON_Duplicate(data,1);pthread_cond_broadcast(&ota_changed);}
+                    pthread_mutex_unlock(&ota_mutex);
+                }
+            }
         }
         cJSON_Delete(in);return 0;
     }
@@ -412,7 +491,7 @@ static int handle_downlink(const char *topic,const char *down_req,const char *up
     int code=0;cJSON *result=NULL;
     if(!token_ok(request_id,64) || !token_ok(method,64)) code=4001;
     else if(strcmp(str(in,"device_id"),str(config,"device_id")) || strcmp(str(in,"device_type"),device_type_of(config))) code=4032;
-    else if(strcmp(version,"1.0")) code=4001;
+    else if(strcmp(version,"1.0") || strcmp(str(in,"event_type"),"rpc_request")) code=4001;
     else {
         char *digest=data?cJSON_PrintUnformatted(data):strdup("{}");
         cJSON *prior=inbox_find(request_id);
@@ -429,13 +508,14 @@ static int handle_downlink(const char *topic,const char *down_req,const char *up
             if(!cJSON_IsNumber(ts_item) || !cJSON_IsNumber(exp_item) || num(in,"expiresAt")<=num(in,"ts")) code=4001;
             else if(num(in,"expiresAt")<=(double)now) code=4081;
             else dispatch_method(config,method,data,&code,&result);
-            if(code!=4091) inbox_store(request_id,method,digest,code,result?cJSON_Duplicate(result,1):NULL);
+            if(code!=4091 && code!=5001) inbox_store(request_id,method,digest,code,result?cJSON_Duplicate(result,1):NULL);
         }
         free(digest);
     }
     if(!code && !strcmp(method,"ota.start") && task_object() &&
+       !strcmp(str(data,"upgradeId"),str(task_object(),"upgradeId")) &&
        !strcmp(str(task_object(),"upgradeStatus"),"pending")) {
-        js(task_object(),"mockReplyRequestId",request_id);session_save();
+        js(task_object(),"acceptedRequestId",request_id);session_save();
     }
     int rc=reply_rpc(up_resp,config,request_id,method,code,result);
     cJSON_Delete(in);return rc;
@@ -450,12 +530,35 @@ static void copy_fields(cJSON *dst,const cJSON *src) {
 int main(int argc,char **argv) {
     if(argc==2 && !strcmp(argv[1],"--self-check")){puts("PASS: monitor");return 0;}
     if(argc!=3){fprintf(stderr,"Usage: %s CONFIG RUNTIME\n",argv[0]);return 64;}
-    umask(0077);signal(SIGTERM,stop_monitor);signal(SIGINT,stop_monitor);
+    umask(0077);signal(SIGTERM,stop_monitor);signal(SIGINT,stop_monitor);signal(SIGPIPE,SIG_IGN);
     if(private_directory(argv[2]))return 1;
     char status_path[PATH_MAX],lock_path[PATH_MAX];
     if(path_join(status_path,sizeof(status_path),argv[2],"status.json") || path_join(lock_path,sizeof(lock_path),argv[2],".lock"))return 1;
     int lock=open(lock_path,O_CREAT|O_RDWR|O_CLOEXEC|O_NOFOLLOW,0600);if(lock<0 || flock(lock,LOCK_EX|LOCK_NB))return 1;
     cJSON *config=!strcmp(argv[1],"--builtin")?monitor_defaults():json_load(argv[1]);
+    FILE *boot=fopen("/proc/sys/kernel/random/boot_id","r");
+    if(boot){if(!fgets(boot_identifier,sizeof(boot_identifier),boot))boot_identifier[0]=0;fclose(boot);}
+    boot_identifier[strcspn(boot_identifier,"\r\n")]=0;
+    int query_identity=1;
+#ifdef SERVICE_TESTING
+    query_identity=getenv("HEAD_CAM_EGO_HELPER") && getenv("HEAD_CAM_EGO_LIBRARY");
+#endif
+    while(query_identity && config && cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(config,"enabled")) && !monitor_stop) {
+        cJSON *device=ego_query();
+        const char *sn=str(device,"deviceCode");
+        size_t length=strlen(sn);
+        int ready=device && cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(device,"deviceValid")) && length>=4 && id_ok(sn);
+        update_device_cache(device);
+        if(ready) {
+            js(config,"device_id",short_sn(sn));
+            js(config,"device_sn",sn);
+        }
+        cJSON_Delete(device);
+        if(ready)break;
+        cJSON *status=cJSON_CreateObject();js(status,"state","sdk_unavailable");json_save(status_path,status);cJSON_Delete(status);
+        fprintf(stderr,"SDK device query unavailable; retrying in 5 seconds\n");pause_seconds(5);
+    }
+    if(monitor_stop){cJSON_Delete(config);close(lock);return 0;}
     int configured=config && cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(config,"enabled")) &&
         *str(config,"host") && id_ok(str(config,"device_id")) && *str(config,"topic_prefix") &&
         strlen(str(config,"topic_prefix"))<256 && !strpbrk(str(config,"topic_prefix"),"+#") &&
@@ -471,19 +574,33 @@ int main(int argc,char **argv) {
         cJSON_Delete(config);close(lock);return 0;
     }
     char presence[512],summary[512],down_req[512],down_resp[512],up_req[512],up_resp[512],up_prop[512],encoded[384];
-    const char *prefix=str(config,"topic_prefix"),*id=str(config,"device_id");
-    if(topic_segment(encoded,sizeof(encoded),id) ||
-       topic_of(presence,sizeof(presence),prefix,id,"presence") ||
-       topic_of(summary,sizeof(summary),prefix,id,"recording/summary") ||
+    const char *prefix=str(config,"topic_prefix"),*sn=str(config,"device_sn");
+    const char *topic_id=short_sn(*sn?sn:str(config,"device_id"));
+    if(topic_segment(encoded,sizeof(encoded),topic_id) ||
+       topic_of(presence,sizeof(presence),prefix,encoded,"presence") ||
+       topic_of(summary,sizeof(summary),prefix,encoded,"recording/summary") ||
        topic_of(down_req,sizeof(down_req),prefix,encoded,"downlink/req") ||
        topic_of(down_resp,sizeof(down_resp),prefix,encoded,"downlink/resp") ||
        topic_of(up_req,sizeof(up_req),prefix,encoded,"uplink/req") ||
        topic_of(up_resp,sizeof(up_resp),prefix,encoded,"uplink/resp") ||
        topic_of(up_prop,sizeof(up_prop),prefix,encoded,"uplink/property")) return 1;
     session_open(argv[2]);
+    cJSON *restored=task_object();
+    if(restored && (!strcmp(str(restored,"upgradeStatus"),"pending") || !strcmp(str(restored,"upgradeStatus"),"upgrading"))) {
+        if(cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(restored,"sdkSucceeded"))) {
+            verification_deadline=time(NULL)+180;
+            ota_fast_query=1;
+            bump_status(restored,"upgrading","selfChecking",NULL);
+        } else if(!cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(restored,"sdkSucceeded"))) {
+            cJSON_DeleteItemFromObject(restored,"error");cJSON *error=cJSON_AddObjectToObject(restored,"error");
+            js(error,"code","UPGRADE_INTERRUPTED");js(error,"message","服务重启，升级执行结果未确认");
+            char now[40];cst_timestamp(now);bump_status(restored,"failed","completed",now);
+        }
+    }
     pthread_t scanner;if(pthread_create(&scanner,NULL,scan_loop,config))return 1;
     int fd=-1;unsigned seq=0,sent=0,retry=2;time_t next_report=0,next_property=0,next_ping=0,ping_deadline=0;
     while(!monitor_stop) {
+        ota_tick(fd>=0?up_req:NULL,config);
         if(fd<0) {
             cJSON *will=payload(config,"offline",++seq);js(will,"status","offline");
             char *text=cJSON_PrintUnformatted(will);fd=text?monitor_connect(config,presence,text):-1;free(text);cJSON_Delete(will);
@@ -513,7 +630,7 @@ int main(int argc,char **argv) {
         json_save(status_path,state);cJSON_Delete(state);
         int failed=0;time_t now=time(NULL);
         if(fd>=0 && (now>=next_report || current!=sent)) {
-            cJSON *online=payload(config,"online",++seq);js(online,"status","online");failed=publish_json(fd,presence,online,1);
+            cJSON *online=payload(config,"online",++seq);js(online,"status","online");failed=publish_json(fd,presence,online,0);
             if(!failed && snapshot) {
                 cJSON *j=payload(config,"recording_summary",++seq);
                 copy_fields(j,snapshot);
@@ -550,10 +667,15 @@ int main(int argc,char **argv) {
         if(fd>=0 && !failed && ping_deadline && time(NULL)>ping_deadline)failed=1;
         if(failed){close(fd);fd=-1;qos1_reset();}
         if(fd<0) {
-            pause_seconds(retry);
+            for(unsigned wait=0;wait<retry && !monitor_stop;wait++) {
+                ota_tick(NULL,config);
+                pause_seconds(1);
+            }
             if(retry<60)retry=retry>30?60:retry*2;
         }
     }
-    if(fd>=0){cJSON *j=payload(config,"offline",++seq);js(j,"status","offline");publish_json(fd,presence,j,1);monitor_disconnect(fd);close(fd);}
-    pthread_join(scanner,NULL);cJSON_Delete(latest);cJSON_Delete(session);cJSON_Delete(config);close(lock);return 0;
+    if(fd>=0){cJSON *j=payload(config,"offline",++seq);js(j,"status","offline");publish_json(fd,presence,j,0);monitor_disconnect(fd);close(fd);}
+    pthread_mutex_lock(&ota_mutex);pthread_cond_broadcast(&ota_changed);pthread_mutex_unlock(&ota_mutex);
+    if(ota_joinable)pthread_join(ota_thread,NULL);
+    pthread_join(scanner,NULL);cJSON_Delete(device_cache);cJSON_Delete(latest);cJSON_Delete(session);cJSON_Delete(config);close(lock);return 0;
 }

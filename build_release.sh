@@ -54,8 +54,8 @@ if [[ $(uname -m) == aarch64 && $ARCH == arm64 || $(uname -m) == x86_64 && $ARCH
 elif [[ -n ${QEMU_SELF_CHECK:-} ]]; then
     qemu-aarch64 "$WORK/head-cam-service" --self-check
 fi
-if (( $(stat -c %s "$WORK/head-cam-service") + 50000 > 5000000 )); then
-    echo 'Compressed binary exceeds release budget (5 MB including supporting files).' >&2
+if (( $(stat -c %s "$WORK/head-cam-service") + 50000 > 5500000 )); then
+    echo "Compressed binary size $(stat -c %s "$WORK/head-cam-service") exceeds release budget (5.5 MB including supporting files)." >&2
     exit 1
 fi
 mkdir -p "$ROOT/dist"

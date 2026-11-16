@@ -1,4 +1,5 @@
 #include "service.h"
+#include "ota.h"
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -413,6 +414,16 @@ static void execute(task_manager *m,task *t) {
     snprintf(root,sizeof(root),"%s",str(t->json,"path")); js(t->json,"status","scanning"); timestamp(now); js(t->json,"started_at",now);
     js(t->json,"phase","scanning");
     int rc=save(m,t); pthread_mutex_unlock(&m->mutex);
+    int operation = -1;
+    if(getenv("HEAD_CAM_HOME")) {
+        operation=operation_lock(0);
+        if(operation<0) {
+            pthread_mutex_lock(&m->mutex);
+            js(t->json,"status","failed");js(t->json,"error","设备正在升级，稍后重试上传");
+            pthread_mutex_unlock(&m->mutex);
+            goto finish;
+        }
+    }
     if(rc) goto cleanup;
     const cJSON *files=cJSON_GetObjectItemCaseSensitive(t->json,"files");
     if(!files) rc=scan(&p,root,0,error);
@@ -529,6 +540,7 @@ finish:
     if(!strcmp(str(t->json,"status"),"completed")) json_number(t->json,"progress_percent",100);
     timestamp(now); js(t->json,"finished_at",now); save(m,t); pthread_mutex_unlock(&m->mutex);
 cleanup:
+    if(operation>=0)close(operation);
     for(size_t i=0;i<p.count;i++) { free(p.items[i].path); free(p.items[i].dest); } free(p.items);
 }
 static void *worker(void *data) {
