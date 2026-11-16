@@ -12,6 +12,7 @@ import tempfile
 import time
 import threading
 import unittest
+from urllib.parse import quote
 from test_monitor import ROOT, handshake, app_message, mqtt_publish
 
 
@@ -26,7 +27,7 @@ class OtaTest(unittest.TestCase):
         self.broker.bind(('127.0.0.1', 0))
         self.broker.listen()
         self.broker.settimeout(10)
-        self.device = dict(deviceValid=True, stateValid=True, deviceCode='camera-0012',
+        self.device = dict(deviceValid=True, stateValid=True, deviceCode='EVT-1/0021',
                            version='1.105.11.12.T', hardware='TEST', state=0, battery=80, charge=0)
         self.state = self.root / 'sdk.json'
         self.save_device()
@@ -56,7 +57,7 @@ class OtaTest(unittest.TestCase):
         self.conn = self.broker.accept()[0]
         self.addCleanup(self.conn.close)
         serial = self.device['deviceCode']
-        handshake(self, self.conn, 'lab', serial[-4:], client_id=serial)
+        handshake(self, self.conn, 'head_cam_v2', quote(serial, safe=''), client_id=serial)
 
     def stop(self):
         if self.process.poll() is None:
@@ -66,15 +67,16 @@ class OtaTest(unittest.TestCase):
     def send(self, request='start-1', method='ota.start', data=None):
         now = int(time.time()*1000)
         serial = self.device['deviceCode']
-        value = dict(protocolVersion='1.0', device_id=serial[-4:], device_type='head_cam_v2',
+        value = dict(protocolVersion='1.0', device_id=serial if method.startswith('ota.') else serial[-4:], device_type='head_cam_v2',
                      event_type='rpc_request', ts=now, expiresAt=now+120000,
                      requestId=request, method=method, data=self.data if data is None else data)
-        self.conn.sendall(mqtt_publish(f'lab/device/{serial[-4:]}/downlink/req', json.dumps(value), qos=1))
+        topic = f"device/head_cam_v2/{quote(serial, safe='')}/downlink/req"
+        self.conn.sendall(mqtt_publish(topic, json.dumps(value), qos=1))
 
     def wait(self, predicate):
         for _ in range(80):
             topic, value = app_message(self.conn)
-            self.assertTrue(topic.startswith(f"lab/device/{self.device['deviceCode'][-4:]}/"), topic)
+            self.assertTrue(topic.startswith(f"device/head_cam_v2/{quote(self.device['deviceCode'], safe='')}/"), topic)
             if predicate(value):
                 return value
         self.fail('expected message missing')
@@ -89,11 +91,11 @@ class OtaTest(unittest.TestCase):
         self.send()
         self.assertTrue(self.reply()['data']['accepted'])
         report = self.wait(lambda x: x.get('method') == 'ota.reportStatus')
-        self.assertEqual(report['device_id'], '0012')
+        self.assertEqual(report['device_id'], 'EVT-1/0021')
         self.assertEqual(report['data']['upgradeStatus'], 'failed')
         self.assertEqual(report['data']['error']['code'], 'DEVICE_BUSY')
         response = dict(report, event_type='rpc_response', code=0, data={})
-        self.conn.sendall(mqtt_publish('lab/device/0012/downlink/resp', json.dumps(response)))
+        self.conn.sendall(mqtt_publish('device/head_cam_v2/EVT-1%2F0021/downlink/resp', json.dumps(response)))
         session = self.root / 'runtime/monitor/mqtt-session.json'
         deadline = time.monotonic()+5
         while time.monotonic() < deadline:
@@ -109,7 +111,7 @@ class OtaTest(unittest.TestCase):
         self.save_device()
         self.start()
         summary = self.wait(lambda x: x.get('event_type') == 'recording_summary')
-        self.assertEqual(summary['device_sn'], '0012')
+        self.assertEqual(summary['device_sn'], 'EVT-1/0021')
         self.assertEqual(summary['battery']['soc'], 19)
         self.assertFalse(summary['battery']['charging'])
         self.send()
@@ -217,7 +219,7 @@ class OtaTest(unittest.TestCase):
         self.assertEqual(renewal['data']['firmwareId'], '1001')
         response = dict(renewal, event_type='rpc_response', code=0,
                         data=dict(firmwareId='1001', downloadUrl=url, downloadExpiresAt='2099-01-01T00:00:00Z'))
-        self.conn.sendall(mqtt_publish('lab/device/0012/downlink/resp', json.dumps(response)))
+        self.conn.sendall(mqtt_publish('device/head_cam_v2/EVT-1%2F0021/downlink/resp', json.dumps(response)))
         report = self.wait(lambda x: x.get('method') == 'ota.reportStatus' and x['data']['stage'] == 'rebooting')
         self.assertLess(report['data']['progress'], 100)
         self.assertEqual((self.root/'installed.bin').read_bytes(), content)

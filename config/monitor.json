@@ -9,7 +9,6 @@
   "qos": 0,
   "username": "",
   "password": "",
-  "topic_prefix": "orin/prod",
   "recording_root": "/mnt/sd",
   "storage_path": "/mnt/sd/sd0",
   "battery_capacity_path": "",
@@ -17,5 +16,5 @@
   "report_interval_sec": 120,
   "warning_free_gb": 5,
   "critical_free_gb": 2,
-  "notes": "MQTT Client ID 使用 SDK 返回的完整 deviceCode。MQTT 主题和报文中的 device_id、device_sn 使用 SN 后四位。OTA 型号为 head_cam_v2。"
+  "notes": "MQTT 主题使用 device/{deviceType}/{sn}，完整 SN 按 RFC 3986 编码。普通报文的 device_id 使用 SN 后四位。device_sn、MQTT Client ID 和 OTA 报文中的 device_id 使用完整原始 SN。"
 }

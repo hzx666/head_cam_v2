@@ -73,19 +73,25 @@ static void cst_timestamp(char ts[40]) {
     time_t now=time(NULL)+8*3600;struct tm tm;
     gmtime_r(&now,&tm);strftime(ts,40,"%Y-%m-%dT%H:%M:%S+08:00",&tm);
 }
+static const char *device_type_of(const cJSON *config) {
+    const char *type=str(config,"device_type");return *type?type:"head_cam_v2";
+}
 static const char *short_sn(const char *sn) {
-    size_t length=strlen(sn);
-    return length>4?sn+length-4:sn;
+    const char *suffix=sn+strlen(sn);
+    for(int count=0;count<4 && suffix>sn;count++) {
+        do { suffix--; } while(suffix>sn && ((unsigned char)*suffix & 0xc0)==0x80);
+    }
+    return suffix;
 }
 static cJSON *payload(const cJSON *config,const char *event,unsigned seq) {
     cJSON *j=cJSON_CreateObject();char ts[40];cst_timestamp(ts);
     int summary=!strcmp(event,"recording_summary");
     if(summary) {
         const char *sn=str(config,"device_sn");
-        js(j,"device_sn",short_sn(*sn?sn:str(config,"device_id")));
+        js(j,"device_sn",*sn?sn:str(config,"device_id"));
         json_number(j,"schema_version",MONITOR_SCHEMA_VERSION);
     } else {
-        js(j,"device_id",str(config,"device_id"));js(j,"device_type","head_cam_v2");
+        js(j,"device_id",str(config,"device_id"));js(j,"device_type",device_type_of(config));
         js(j,"service","head-cam-monitor");js(j,"version",MONITOR_RELEASE_VERSION);js(j,"ip",local_ip);
     }
     js(j,"event_type",event);js(j,"ts",ts);json_number(j,"seq",seq);
@@ -95,8 +101,8 @@ static int publish_json(int fd,const char *topic,cJSON *j,int retain) {
     char *text=cJSON_PrintUnformatted(j);int rc=text?monitor_publish(fd,topic,text,retain):-1;
     free(text);cJSON_Delete(j);return rc;
 }
-static int topic_of(char *out,size_t cap,const char *prefix,const char *id,const char *suffix) {
-    int wrote=snprintf(out,cap,"%s/device/%s/%s",prefix,id,suffix);
+static int topic_of(char *out,size_t cap,const char *type,const char *id,const char *suffix) {
+    int wrote=snprintf(out,cap,"device/%s/%s/%s",type,id,suffix);
     return wrote<0 || (size_t)wrote>=cap?-1:0;
 }
 static int token_ok(const char *s,size_t cap) {
@@ -179,9 +185,6 @@ static void session_open(const char *runtime) {
     if(!session) session=cJSON_CreateObject();
     if(!cJSON_IsString(cJSON_GetObjectItemCaseSensitive(session,"propertyVersion"))) js(session,"propertyVersion","1");
 }
-static const char *device_type_of(const cJSON *config) {
-    const char *type=str(config,"device_type");return *type?type:"head_cam_v2";
-}
 static const char *rpc_text(int code) {
     switch(code) {
     case 0: return "操作成功";
@@ -211,9 +214,14 @@ static void remember_rpc(const char *channel,const char *id,const char *method,i
     last_rpc.code=code;last_rpc.valid=1;
     fprintf(stderr,"mqtt %s requestId=%s method=%s code=%d %s\n",last_rpc.channel,last_rpc.request_id,last_rpc.method,code,last_rpc.message);
 }
+static const char *rpc_device_id(const cJSON *config,const char *method) {
+    const char *sn=str(config,"device_sn");
+    if(method && !strncmp(method,"ota.",4) && *sn)return sn;
+    return str(config,"device_id");
+}
 static cJSON *rpc_envelope(const cJSON *config,const char *event,const char *request_id,const char *method) {
     cJSON *j=cJSON_CreateObject();
-    js(j,"protocolVersion","1.0");js(j,"device_id",str(config,"device_id"));js(j,"device_type",device_type_of(config));
+    js(j,"protocolVersion","1.0");js(j,"device_id",rpc_device_id(config,method));js(j,"device_type",device_type_of(config));
     js(j,"event_type",event);json_number(j,"ts",(double)unix_ms());
     js(j,"requestId",request_id?request_id:"");js(j,"method",method?method:"");
     return j;
@@ -298,7 +306,7 @@ static int maybe_report(const char *topic,const cJSON *config) {
     if(report_expires && now>=report_expires) { if(uuid_v4(report_request)) return -1; report_expires=0; report_sent_at=0; }
     if(report_sent_at && now<report_sent_at+10000) return 0;
     cJSON *stored=cJSON_GetObjectItemCaseSensitive(session,"pendingReport");
-    if(!stored || strcmp(str(stored,"device_id"),str(config,"device_id")) ||
+    if(!stored || strcmp(str(stored,"device_id"),rpc_device_id(config,"ota.reportStatus")) ||
        strcmp(str(cJSON_GetObjectItemCaseSensitive(stored,"data"),"statusVersion"),version) || num(stored,"expiresAt")<=now) {
         cJSON_DeleteItemFromObject(session,"pendingReport");
         stored=rpc_envelope(config,"rpc_request",report_request,"ota.reportStatus");
@@ -464,7 +472,7 @@ static int handle_downlink(const char *topic,const char *down_req,const char *up
     if(len) memcpy(text,bytes,len);text[len]=0;
     cJSON *in=cJSON_Parse(text);free(text);
     if(!strcmp(topic,down_resp)) {
-        if(in && !strcmp(str(in,"device_id"),str(config,"device_id")) &&
+        if(in && !strcmp(str(in,"device_id"),rpc_device_id(config,str(in,"method"))) &&
            !strcmp(str(in,"device_type"),device_type_of(config)) && !strcmp(str(in,"event_type"),"rpc_response")) {
             cJSON *code_item=cJSON_GetObjectItemCaseSensitive(in,"code");
             int code=cJSON_IsNumber(code_item)?(int)code_item->valuedouble:-1;
@@ -490,7 +498,7 @@ static int handle_downlink(const char *topic,const char *down_req,const char *up
     if(!cJSON_IsObject(data)) data=NULL;
     int code=0;cJSON *result=NULL;
     if(!token_ok(request_id,64) || !token_ok(method,64)) code=4001;
-    else if(strcmp(str(in,"device_id"),str(config,"device_id")) || strcmp(str(in,"device_type"),device_type_of(config))) code=4032;
+    else if(strcmp(str(in,"device_id"),rpc_device_id(config,method)) || strcmp(str(in,"device_type"),device_type_of(config))) code=4032;
     else if(strcmp(version,"1.0") || strcmp(str(in,"event_type"),"rpc_request")) code=4001;
     else {
         char *digest=data?cJSON_PrintUnformatted(data):strdup("{}");
@@ -546,8 +554,7 @@ int main(int argc,char **argv) {
     while(query_identity && config && cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(config,"enabled")) && !monitor_stop) {
         cJSON *device=ego_query();
         const char *sn=str(device,"deviceCode");
-        size_t length=strlen(sn);
-        int ready=device && cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(device,"deviceValid")) && length>=4 && id_ok(sn);
+        int ready=device && cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(device,"deviceValid")) && id_ok(sn);
         update_device_cache(device);
         if(ready) {
             js(config,"device_id",short_sn(sn));
@@ -559,9 +566,11 @@ int main(int argc,char **argv) {
         fprintf(stderr,"SDK device query unavailable; retrying in 5 seconds\n");pause_seconds(5);
     }
     if(monitor_stop){cJSON_Delete(config);close(lock);return 0;}
+    const char *type=device_type_of(config),*sn=str(config,"device_sn");
+    const char *topic_id=*sn?sn:str(config,"device_id");
     int configured=config && cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(config,"enabled")) &&
-        *str(config,"host") && id_ok(str(config,"device_id")) && *str(config,"topic_prefix") &&
-        strlen(str(config,"topic_prefix"))<256 && !strpbrk(str(config,"topic_prefix"),"+#") &&
+        *str(config,"host") && id_ok(str(config,"device_id")) && id_ok(topic_id) &&
+        strlen(type)<64 && !type[strspn(type,"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_.~")] &&
         num(config,"port")>=1 && num(config,"port")<=65535 &&
         !cJSON_IsTrue(cJSON_GetObjectItemCaseSensitive(config,"tls")) && num(config,"qos")==0 &&
         (!*str(config,"password") || *str(config,"username")) &&
@@ -574,16 +583,14 @@ int main(int argc,char **argv) {
         cJSON_Delete(config);close(lock);return 0;
     }
     char presence[512],summary[512],down_req[512],down_resp[512],up_req[512],up_resp[512],up_prop[512],encoded[384];
-    const char *prefix=str(config,"topic_prefix"),*sn=str(config,"device_sn");
-    const char *topic_id=short_sn(*sn?sn:str(config,"device_id"));
     if(topic_segment(encoded,sizeof(encoded),topic_id) ||
-       topic_of(presence,sizeof(presence),prefix,encoded,"presence") ||
-       topic_of(summary,sizeof(summary),prefix,encoded,"recording/summary") ||
-       topic_of(down_req,sizeof(down_req),prefix,encoded,"downlink/req") ||
-       topic_of(down_resp,sizeof(down_resp),prefix,encoded,"downlink/resp") ||
-       topic_of(up_req,sizeof(up_req),prefix,encoded,"uplink/req") ||
-       topic_of(up_resp,sizeof(up_resp),prefix,encoded,"uplink/resp") ||
-       topic_of(up_prop,sizeof(up_prop),prefix,encoded,"uplink/property")) return 1;
+       topic_of(presence,sizeof(presence),type,encoded,"uplink/presence") ||
+       topic_of(summary,sizeof(summary),type,encoded,"uplink/recording/summary") ||
+       topic_of(down_req,sizeof(down_req),type,encoded,"downlink/req") ||
+       topic_of(down_resp,sizeof(down_resp),type,encoded,"downlink/resp") ||
+       topic_of(up_req,sizeof(up_req),type,encoded,"uplink/req") ||
+       topic_of(up_resp,sizeof(up_resp),type,encoded,"uplink/resp") ||
+       topic_of(up_prop,sizeof(up_prop),type,encoded,"uplink/property")) return 1;
     session_open(argv[2]);
     cJSON *restored=task_object();
     if(restored && (!strcmp(str(restored,"upgradeStatus"),"pending") || !strcmp(str(restored,"upgradeStatus"),"upgrading"))) {

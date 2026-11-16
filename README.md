@@ -13,7 +13,7 @@ chmod 700 head-cam-service
 安装后自动启动并在设备的 `/config/diy.sh` 注册开机自启。日常管理使用 `./head-cam-service` 的 `restart`、`stop`、`start`、`status` 子命令。手动恢复默认网关可运行 `./head-cam-service dhcp`。
 自更新默认关闭，安装、开机和重启不检查远端更新；手动更新先 stop，再 update，最后 start。
 查询当前文件版本：`./head-cam-service --version`；查询后台运行版本：`./head-cam-service status`；构建详情：`./head-cam-service --build-info`。
-`EgoQueryDeviceInfo()` 返回的完整 `deviceCode` 用作 MQTT Client ID。MQTT Topic 中的 `{sn}` 和 MQTT 报文里的 `device_id`、`device_sn` 取 SN 后四位。OTA 请求体里的 `device_id` 同样使用后四位。固件版本取 `version`。SDK 查询失败时监控状态为 `sdk_unavailable`，上传服务独立运行。
+`EgoQueryDeviceInfo()` 返回的完整 `deviceCode` 用作 MQTT Client ID、录制汇总的 `device_sn` 和 OTA RPC 报文中的 `device_id`。MQTT Topic 使用 `device/{deviceType}/{sn}`，其中 `{sn}` 是按 RFC 3986 编码的完整 SN。普通 MQTT 报文里的 `device_id` 取 SN 后四位。上线、离线和遗嘱使用 `/uplink/presence`。固件版本取 `version`。SDK 查询失败时监控状态为 `sdk_unavailable`，上传服务独立运行。
 
 手机 App 浏览头环目录、选择目录后提交任务。C 服务递归扫描 MCAP，解析头环文件名，校验 SHA256，上传 OSS 并写入 metadata。接口和任务管理参考 teleop，头环命名及 metadata 参考 develop 的 head_cam。
 
@@ -131,14 +131,14 @@ ARM64 成品内嵌供应商 `libegosdk.so` 与桥接程序，启动后释放到�
 
 内置配置使用 `head_cam_v2` 作为 `hardware_model`，云端 `ota.start` 的 `data.hardwareModel` 须一致。录制扫描根目录为 `/mnt/sd`，存储容量仍读取 `/mnt/sd/sd0`。如果部署了外部 `monitor.json`，守护进程优先读取该文件，也支持 `HEAD_CAM_MONITOR_CONFIG` 显式指定。`device_id` 和 `device_sn` 在运行时由 SDK 覆盖，不需要手工写 SN。
 
-1. `ota.start` 从 `orin/prod/device/{sn}/downlink/req` 下发。校验参数、型号、重复指令后查询整机固件版本。版本格式为 `1.105.11.12.T`，后缀相同时依次按数字比较首段、递增版本号、月份、日期。目标版本更高时可受理。操作人明确选择降级时，云端在 `data` 中加布尔字段 `"allowDowngrade": true`，设备才受理较低的目标版本，并走同样的下载、校验、安装和版本确认流程。未授权降级、目标版本相同、后缀不同或格式不符时返回 `4222 VERSION_CONFLICT`。SDK 查询失败返回 `5001 TEMPORARY_UNAVAILABLE`。
+1. `ota.start` 从 `device/{deviceType}/{sn}/downlink/req` 下发。校验参数、型号、重复指令后查询整机固件版本。版本格式为 `1.105.11.12.T`，后缀相同时依次按数字比较首段、递增版本号、月份、日期。目标版本更高时可受理。操作人明确选择降级时，云端在 `data` 中加布尔字段 `"allowDowngrade": true`，设备才受理较低的目标版本，并走同样的下载、校验、安装和版本确认流程。未授权降级、目标版本相同、后缀不同或格式不符时返回 `4222 VERSION_CONFLICT`。SDK 查询失败返回 `5001 TEMPORARY_UNAVAILABLE`。
 2. 回复 `accepted: true` 后检查工作状态和电量。录制、上传、非空闲状态结束本次任务并上报 `DEVICE_BUSY`。SDK 明确报告充电中（`charge == 1`）时跳过电量检查；其余情况下电量必须有效且至少为 20%，低于门槛上报 `LOW_BATTERY`。SDK 状态查询失败仍终止任务。安装前再次检查。
 3. OSS 临时 HTTPS URL 下载到 `/tmp/head-cam-ota-随机目录/firmware.bin`。下载前检查空间和空闲内存，除包大小外预留 32 MiB。校验 TLS 证书、文件大小和 SHA-256；401/403 时用 `ota.getDownloadUrl` 为原 `firmwareId` 续签一次，等待上限 120 秒。当前不支持下载重定向和断点续传。
 4. 再查状态和电量，把本地文件路径交给 `EgoExecuteUpgradeFile()`。整个下载、安装和完成核对期间，与本服务上传及 OSS 服务自更新互斥。SDK 回调驱动安装进度，变化时最多每 5 秒上报一次，阶段切换立即上报。下载映射到 0–50%，校验 50%，安装 55–95%，回调成功仍不报 100%。
 5. SDK 成功后等待设备恢复，重新查询实际版本及空闲状态；目标版本一致才上报 `success / completed / 100`。180 秒未确认则失败。任务及待确认上报保存在 `runtime/monitor/mqtt-session.json`，服务重启后恢复核对；执行中断且没有 SDK 成功记录时报告 `UPGRADE_INTERRUPTED`。这一版不实现启动分区验收和自动回滚，也不主动调用 Linux reboot。
-6. `ota.reportStatus` 从 `orin/prod/device/{sn}/uplink/req` 上报；云端在 `downlink/resp` 用相同 `requestId`、`method` 回复 `code: 0`。未确认的最新状态每 10 秒重发，终态确认后停止；`ota.getStatus` 可查询当前持久化任务。下载/校验期间支持取消，安装及核对阶段拒绝取消，暂停暂不支持。
+6. `ota.reportStatus` 从 `device/{deviceType}/{sn}/uplink/req` 上报；云端在 `downlink/resp` 用相同 `requestId`、`method` 回复 `code: 0`。未确认的最新状态每 10 秒重发，终态确认后停止；`ota.getStatus` 可查询当前持久化任务。下载/校验期间支持取消，安装及核对阶段拒绝取消，暂停暂不支持。
 
-电量和充电状态统一放在 `orin/prod/device/{sn}/recording/summary` 的 `battery` 内：`valid`、`soc`、`charging`。查询失败时值为 `null`，不伪造 0%；在线/离线仍由 MQTT 判断。
+电量和充电状态统一放在 `device/{deviceType}/{sn}/uplink/recording/summary` 的 `battery` 内：`valid`、`soc`、`charging`。查询失败时值为 `null`，不伪造 0%；在线/离线仍由 MQTT 判断。
 
 外接供电测试机 `8L6AR120005` 在 OTA 电量检查中按充电处理。匹配依据是 SDK 返回的完整设备编号，监控仍上报 SDK 的实际读数。
 

@@ -51,7 +51,7 @@ def mqtt_publish(topic, payload, qos=0, packet_id=1):
     return bytes([0x30 | (qos << 1)]) + remaining(len(body)) + body
 
 
-def handshake(test, conn, prefix, device, client_id=None):
+def handshake(test, conn, device_type, device, client_id=None):
     conn.settimeout(15)
     kind, body = packet(conn)
     test.assertEqual(kind, 0x10)
@@ -59,6 +59,10 @@ def handshake(test, conn, prefix, device, client_id=None):
     test.assertEqual(body[7] & 0x24, 0x04)  # Will enabled, Will Retain disabled.
     length = int.from_bytes(body[10:12], 'big')
     test.assertEqual(body[12:12 + length].decode(), client_id if client_id is not None else device)
+    will_offset = 12 + length
+    will_length = int.from_bytes(body[will_offset:will_offset + 2], 'big')
+    test.assertEqual(body[will_offset + 2:will_offset + 2 + will_length].decode(),
+                     f'device/{device_type}/{device}/uplink/presence')
     conn.sendall(b'\x20\x02\x00\x00')
     kind, body = packet(conn)
     test.assertEqual(kind, 0x82)
@@ -73,8 +77,8 @@ def handshake(test, conn, prefix, device, client_id=None):
         test.assertEqual(body[index], 1)
         index += 1
     test.assertEqual(topics, [
-        f'{prefix}/device/{device}/downlink/req',
-        f'{prefix}/device/{device}/downlink/resp',
+        f'device/{device_type}/{device}/downlink/req',
+        f'device/{device_type}/{device}/downlink/resp',
     ])
     conn.sendall(bytes([0x90, 2 + len(topics), 0x00, 0x01, 0x01, 0x01]))
 
@@ -121,16 +125,18 @@ class MonitorTest(unittest.TestCase):
             process = subprocess.Popen([str(ROOT / 'build-service-native/head-cam-monitor'), str(path), str(root / 'runtime')])
             try:
                 with broker.accept()[0] as conn:
-                    handshake(self, conn, 'test', 'test')
+                    handshake(self, conn, 'head_cam_v2', 'test')
                     deadline = time.monotonic() + 15
                     summary = None
                     while time.monotonic() < deadline:
                         topic, message = app_message(conn)
-                        self.assertTrue(topic.startswith('test/device/test/'))
+                        self.assertTrue(topic.startswith('device/head_cam_v2/test/'))
                         if message['event_type'] == 'online':
+                            self.assertEqual(topic, 'device/head_cam_v2/test/uplink/presence')
                             self.assertEqual(message['device_type'], 'head_cam_v2')
                             self.assertEqual(message['ip'], '127.0.0.1')
                         if message['event_type'] == 'recording_summary' and 'recordings' in message:
+                            self.assertEqual(topic, 'device/head_cam_v2/test/uplink/recording/summary')
                             summary = message
                             break
                     self.assertIsNotNone(summary)
@@ -146,7 +152,7 @@ class MonitorTest(unittest.TestCase):
                 state = json.loads((root / 'runtime/status.json').read_text())
                 self.assertEqual(state['snapshot']['recordings']['file_count'], 1)
                 with broker.accept()[0] as conn:
-                    handshake(self, conn, 'test', 'test')
+                    handshake(self, conn, 'head_cam_v2', 'test')
                     messages = [app_message(conn)[1]['event_type'] for _ in range(2)]
                     self.assertEqual(messages, ['online', 'recording_summary'])
             finally:
@@ -167,7 +173,7 @@ class MonitorTest(unittest.TestCase):
             path.write_text(json.dumps(config))
             version = (ROOT / 'SERVICE_VERSION').read_text().strip()
             process = subprocess.Popen([str(ROOT / 'build-service-native/head-cam-monitor'), str(path), str(root / 'runtime')])
-            downlink = 'lab/device/test/downlink/req'
+            downlink = 'device/head_cam_v2/test/downlink/req'
 
             def rpc(request_id, method, body, now=None):
                 now = int(time.time() * 1000) if now is None else now
@@ -187,9 +193,9 @@ class MonitorTest(unittest.TestCase):
 
             try:
                 with broker.accept()[0] as conn:
-                    handshake(self, conn, 'lab', 'test')
+                    handshake(self, conn, 'head_cam_v2', 'test')
                     topic, report = wait_for(lambda topic, message: message.get('event_type') == 'properties_report')
-                    self.assertEqual(topic, 'lab/device/test/uplink/property')
+                    self.assertEqual(topic, 'device/head_cam_v2/test/uplink/property')
                     self.assertEqual(report['protocolVersion'], '1.0')
                     self.assertIsInstance(report['ts'], int)
                     self.assertEqual(report['data']['propertyVersion'], '1')
@@ -198,7 +204,7 @@ class MonitorTest(unittest.TestCase):
                     self.assertNotIn('requestId', report)
                     rpc('00000000-0000-4000-8000-000000000001', 'properties.get', {'keys': ['firmware']})
                     topic, reply = wait_for(lambda topic, message: message.get('requestId') == '00000000-0000-4000-8000-000000000001')
-                    self.assertEqual(topic, 'lab/device/test/uplink/resp')
+                    self.assertEqual(topic, 'device/head_cam_v2/test/uplink/resp')
                     self.assertEqual(reply['code'], 0)
                     self.assertIsNone(reply['data']['properties']['firmware']['version'])
                     rpc('00000000-0000-4000-8000-000000000002', 'ota.install', {})
